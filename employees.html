@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Employees{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 col-md-8">
+        <h2 class="text-white fw-bold mb-1">Employee Database</h2>
+        <p class="text-muted">Manage employee registry records, credentials, and stored biometric face templates.</p>
+    </div>
+    <div class="col-12 col-md-4 text-md-end">
+        <a href="{{ url_for('register_page') }}" class="btn btn-primary-custom px-4 py-2">
+            <i class="bi bi-person-plus-fill me-2"></i>Add New Employee
+        </a>
+    </div>
+</div>
+
+<div class="glass-card p-4">
+    <!-- Filter Grid -->
+    <div class="row g-3 mb-4 align-items-center">
+        <div class="col-12 col-md-6">
+            <div class="input-group">
+                <span class="input-group-text bg-transparent text-silver border-end-0 border-dark-blue">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" id="employeeSearchInput" class="form-control border-start-0 border-dark-blue bg-transparent text-white" placeholder="Search by name, ID or email...">
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <select id="departmentFilter" class="form-select bg-transparent text-white border-dark-blue">
+                <option value="" class="bg-dark-blue">All Departments</option>
+                <!-- Filled dynamically via JS -->
+            </select>
+        </div>
+        <div class="col-12 col-md-2">
+            <button onclick="applyFilters()" class="btn btn-secondary-custom w-100"><i class="bi bi-funnel-fill me-2"></i>Filter</button>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-responsive">
+        <table class="table table-custom align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Department</th>
+                    <th scope="col">Phone</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Registered</th>
+                    <th scope="col" class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="employeesTableBody">
+                {% if employees %}
+                    {% for emp in employees %}
+                    <tr id="row-{{ emp.EmployeeID }}">
+                        <td><span class="text-primary fw-bold">{{ emp.EmployeeID }}</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-cell text-center me-2">
+                                    <i class="bi bi-person-badge-fill text-silver"></i>
+                                </div>
+                                <span class="text-white fw-semibold">{{ emp.Name }}</span>
+                            </div>
+                        </td>
+                        <td>{{ emp.Department or 'N/A' }}</td>
+                        <td>{{ emp.Phone or 'N/A' }}</td>
+                        <td>{{ emp.Email or 'N/A' }}</td>
+                        <td class="small">{{ emp.CreatedAt or 'N/A' }}</td>
+                        <td class="text-end">
+                            <button onclick="viewEmployee('{{ emp.EmployeeID }}', '{{ emp.Name }}', '{{ emp.Department }}', '{{ emp.Phone }}', '{{ emp.Email }}')" class="btn btn-sm btn-action text-info" title="View details">
+                                <i class="bi bi-eye-fill"></i>
+                            </button>
+                            <button onclick="deleteEmployee('{{ emp.EmployeeID }}', '{{ emp.Name }}')" class="btn btn-sm btn-action text-danger ms-2" title="Delete employee">
+                                <i class="bi bi-trash-fill"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">
+                            <i class="bi bi-people fs-2 d-block mb-2"></i>No employees registered in the system database yet.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- View Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content glass-card">
+            <div class="modal-header border-bottom border-dark-blue">
+                <h5 class="modal-title text-white" id="detailsModalLabel"><i class="bi bi-person-bounding-box text-primary me-2"></i>Employee Profile Card</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <div class="row align-items-center mb-4">
+                    <div class="col-4 text-center">
+                        <img id="detail-avatar" src="" alt="Face Scan" class="rounded border border-primary border-2 shadow img-fluid" style="max-height: 120px; object-fit: cover;">
+                    </div>
+                    <div class="col-8">
+                        <h4 id="detail-name" class="text-white fw-bold mb-1">Hari</h4>
+                        <span id="detail-id" class="badge bg-primary px-3 py-2 mb-2">CRT-101</span>
+                        <div class="text-muted small"><i class="bi bi-building me-1"></i><span id="detail-dept">Chemical Analysis</span></div>
+                    </div>
+                </div>
+                
+                <h6 class="text-white border-bottom pb-2 mb-3 border-dark-blue small text-uppercase fw-semibold tracking-wide">Contact Information</h6>
+                <div class="row g-3 small mb-4">
+                    <div class="col-6">
+                        <span class="text-muted d-block">Phone Number</span>
+                        <strong id="detail-phone" class="text-white">N/A</strong>
+                    </div>
+                    <div class="col-6">
+                        <span class="text-muted d-block">Email Address</span>
+                        <strong id="detail-email" class="text-white">N/A</strong>
+                    </div>
+                </div>
+                
+                <h6 class="text-white border-bottom pb-2 mb-3 border-dark-blue small text-uppercase fw-semibold tracking-wide">Local Biometrics</h6>
+                <div class="alert alert-secondary-custom d-flex align-items-center mb-0" role="alert">
+                    <i class="bi bi-fingerprint text-primary fs-4 me-3"></i>
+                    <div>
+                        <span class="d-block text-white small fw-bold">Biometric Template Encoded</span>
+                        <span class="text-muted small">128-dimensional floating point representation computed and stored in secure vector databases.</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top border-dark-blue">
+                <button type="button" class="btn btn-secondary-custom px-4" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Fetch unique departments to populate filter select dropdown
+    document.addEventListener("DOMContentLoaded", function() {
+        fetch('/api/departments')
+            .then(res => res.json())
+            .then(depts => {
+                const select = document.getElementById('departmentFilter');
+                depts.forEach(dept => {
+                    const opt = document.createElement('option');
+                    opt.value = dept;
+                    opt.textContent = dept;
+                    opt.className = 'bg-dark-blue';
+                    select.appendChild(opt);
+                });
+            })
+            .catch(err => console.error("Error loading departments list:", err));
+    });
+
+    // Filtering logic (Client side quick filter)
+    function applyFilters() {
+        const query = document.getElementById('employeeSearchInput').value.toLowerCase();
+        const dept = document.getElementById('departmentFilter').value.toLowerCase();
+        const rows = document.querySelectorAll('#employeesTableBody tr');
+        
+        rows.forEach(row => {
+            if (row.cells.length < 2) return; // Skip empty message row
+            
+            const name = row.cells[1].textContent.toLowerCase();
+            const id = row.cells[0].textContent.toLowerCase();
+            const email = row.cells[4].textContent.toLowerCase();
+            const rowDept = row.cells[2].textContent.toLowerCase();
+            
+            const matchSearch = name.includes(query) || id.includes(query) || email.includes(query);
+            const matchDept = !dept || rowDept === dept;
+            
+            if (matchSearch && matchDept) {
+                row.classList.remove('d-none');
+            } else {
+                row.classList.add('d-none');
+            }
+        });
+    }
+
+    // Modal view details
+    function viewEmployee(id, name, dept, phone, email) {
+        document.getElementById('detail-name').textContent = name;
+        document.getElementById('detail-id').textContent = id;
+        document.getElementById('detail-dept').textContent = dept || 'N/A';
+        document.getElementById('detail-phone').textContent = phone || 'N/A';
+        document.getElementById('detail-email').textContent = email || 'N/A';
+        
+        // Build image path
+        const sanitized = name.replace(/\s+/g, '_');
+        document.getElementById('detail-avatar').src = `/dataset/${sanitized}_${id}/image1.jpg`;
+        document.getElementById('detail-avatar').onerror = function() {
+            // Fallback to placeholder if image fails to load
+            this.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%236c757d'><rect width='100%23' height='100%23' fill='%23161e31'/><text x='50%23' y='50%23' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' fill='%23a0aec0'>No Scan</text></svg>";
+        };
+        
+        const detailsModal = new Bootstrap.Modal(document.getElementById('detailsModal'));
+        detailsModal.show();
+    }
+
+    // Delete request
+    function deleteEmployee(id, name) {
+        if (confirm(`Are you absolutely sure you want to delete employee "${name}" (${id})?\nThis will remove all their logs, images and face biometric data permanently.`)) {
+            const formData = new FormData();
+            formData.append('employee_id', id);
+            
+            fetch('/api/employee/delete', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Employee deleted successfully.");
+                    const row = document.getElementById(`row-${id}`);
+                    if (row) row.remove();
+                } else {
+                    alert("Error: " + data.message);
+                }
+            })
+            .catch(err => console.error("Error deleting employee:", err));
+        }
+    }
+</script>
+{% endblock %}

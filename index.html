@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2 class="text-white fw-bold mb-1">Dashboard Overview</h2>
+        <p class="text-muted">Welcome to CRT Industries Chemical Lab Face ID authentication console.</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4 g-4">
+    <!-- Total Employees -->
+    <div class="col-12 col-sm-6 col-xl-4">
+        <div class="glass-card stat-card d-flex align-items-center">
+            <div class="stat-icon bg-primary-glow-trans text-primary">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="ms-3">
+                <span class="stat-label text-silver small text-uppercase">Total Employees</span>
+                <h3 class="stat-value text-white fw-bold mb-0" id="stat-total">{{ total_employees }}</h3>
+            </div>
+        </div>
+    </div>
+    <!-- Present Today -->
+    <div class="col-12 col-sm-6 col-xl-4">
+        <div class="glass-card stat-card d-flex align-items-center">
+            <div class="stat-icon bg-success-glow-trans text-success">
+                <i class="bi bi-person-check-fill"></i>
+            </div>
+            <div class="ms-3">
+                <span class="stat-label text-silver small text-uppercase">Present Today</span>
+                <h3 class="stat-value text-white fw-bold mb-0" id="stat-present">{{ present_today }}</h3>
+            </div>
+        </div>
+    </div>
+    <!-- Absent Today -->
+    <div class="col-12 col-sm-6 col-xl-4">
+        <div class="glass-card stat-card d-flex align-items-center">
+            <div class="stat-icon bg-danger-glow-trans text-danger">
+                <i class="bi bi-person-x-fill"></i>
+            </div>
+            <div class="ms-3">
+                <span class="stat-label text-silver small text-uppercase">Absent</span>
+                <h3 class="stat-value text-white fw-bold mb-0" id="stat-absent">{{ absent_today }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Camera Viewport Card -->
+    <div class="col-12 col-lg-7 col-xl-8">
+        <div class="glass-card p-4">
+            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2 border-dark-blue">
+                <h5 class="text-white fw-semibold mb-0"><i class="bi bi-camera-video me-2 text-primary"></i>Live Camera Feed</h5>
+                <span class="badge bg-secondary-custom px-3 py-2 small d-flex align-items-center">
+                    <span class="status-indicator online me-2"></span> Passive Scan Mode
+                </span>
+            </div>
+            
+            <div class="camera-stream-wrapper text-center rounded overflow-hidden position-relative">
+                <img id="dashboard-feed" src="{{ url_for('video_feed') }}" alt="Camera Stream Loading..." class="img-fluid camera-stream">
+                <div id="camera-error-overlay" class="camera-error-overlay d-none">
+                    <i class="bi bi-camera-video-off text-danger fs-1 mb-3"></i>
+                    <p class="text-white fw-bold mb-1">Webcam Hardware Not Accessible</p>
+                    <p class="text-muted small">Check connection, permissions, or system access logs.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Panel -->
+    <div class="col-12 col-lg-5 col-xl-4">
+        <div class="glass-card p-4 h-100">
+            <h5 class="text-white fw-semibold mb-3 border-bottom pb-2 border-dark-blue"><i class="bi bi-lightning-charge-fill text-warning me-2"></i>Quick Actions</h5>
+            
+            <div class="d-grid gap-3">
+                <a href="{{ url_for('attendance_page') }}" class="btn btn-primary-custom py-3 text-start px-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0 text-white fw-bold"><i class="bi bi-camera-video-fill me-2"></i>Start Attendance</h6>
+                            <small class="text-white-50">Open camera for face ID verification</small>
+                        </div>
+                        <i class="bi bi-chevron-right text-white"></i>
+                    </div>
+                </a>
+                
+                <a href="{{ url_for('register_page') }}" class="btn btn-secondary-custom py-3 text-start px-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0 text-white fw-bold"><i class="bi bi-person-plus-fill me-2"></i>Register Employee</h6>
+                            <small class="text-silver">Create profile & scan face images</small>
+                        </div>
+                        <i class="bi bi-chevron-right text-silver"></i>
+                    </div>
+                </a>
+
+                <a href="{{ url_for('reports_page') }}" class="btn btn-secondary-custom py-3 text-start px-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0 text-white fw-bold"><i class="bi bi-file-earmark-bar-graph-fill me-2"></i>Attendance Reports</h6>
+                            <small class="text-silver">Search history, export CSV & Excel</small>
+                        </div>
+                        <i class="bi bi-chevron-right text-silver"></i>
+                    </div>
+                </a>
+
+                <a href="{{ url_for('employees_page') }}" class="btn btn-secondary-custom py-3 text-start px-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0 text-white fw-bold"><i class="bi bi-people-fill me-2"></i>Employee Database</h6>
+                            <small class="text-silver">Manage records & face encodings</small>
+                        </div>
+                        <i class="bi bi-chevron-right text-silver"></i>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="mt-4 pt-3 border-top border-dark-blue bg-dark-blue-tint p-3 rounded text-silver small">
+                <div class="d-flex align-items-center mb-1 text-white fw-semibold">
+                    <i class="bi bi-info-circle-fill text-primary me-2"></i>CRT Lab Offline Node
+                </div>
+                All operations and face datasets reside strictly on local storage. No network connections are initiated.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Monitor MJPEG image error to show error panel
+    const feedImg = document.getElementById('dashboard-feed');
+    const errOverlay = document.getElementById('camera-error-overlay');
+    
+    feedImg.onerror = function() {
+        feedImg.classList.add('d-none');
+        errOverlay.classList.remove('d-none');
+    };
+    
+    // Periodically update dashboard statistics via API
+    function updateStats() {
+        fetch('/api/stats')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('stat-total').textContent = data.total_employees;
+                document.getElementById('stat-present').textContent = data.present_today;
+                document.getElementById('stat-absent').textContent = data.absent_today;
+            })
+            .catch(err => console.error("Error updating stats:", err));
+    }
+    
+    // Poll stats every 5 seconds
+    setInterval(updateStats, 5000);
+</script>
+{% endblock %}

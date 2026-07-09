@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Live Attendance Scan{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 col-md-8">
+        <h2 class="text-white fw-bold mb-1">Live Face ID Attendance</h2>
+        <p class="text-muted">Align face with the camera to mark daily attendance. Duplicate logs are automatically ignored.</p>
+    </div>
+    <div class="col-12 col-md-4 text-md-end">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary-custom px-4 py-2">
+            <i class="bi bi-arrow-left me-2"></i>Exit Scanner
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Camera Viewport Column -->
+    <div class="col-12 col-xl-7">
+        <div class="glass-card p-4">
+            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2 border-dark-blue">
+                <h5 class="text-white fw-semibold mb-0"><i class="bi bi-camera-video me-2 text-primary"></i>Live Scanner</h5>
+                <span class="badge bg-success-glow-trans text-success px-3 py-2 small d-flex align-items-center">
+                    <span class="status-indicator online me-2"></span> Scanner Active
+                </span>
+            </div>
+            
+            <div class="camera-stream-wrapper text-center rounded overflow-hidden position-relative">
+                <img id="attendance-feed" src="{{ url_for('video_feed') }}" alt="Camera Stream Loading..." class="img-fluid camera-stream">
+                <div id="camera-error-overlay" class="camera-error-overlay d-none">
+                    <i class="bi bi-camera-video-off text-danger fs-1 mb-3"></i>
+                    <p class="text-white fw-bold mb-1">Webcam Hardware Not Accessible</p>
+                    <p class="text-muted small">Check connection, permissions, or system access logs.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Verification Log Column -->
+    <div class="col-12 col-xl-5">
+        <div class="glass-card p-4 h-100 d-flex flex-column">
+            <h5 class="text-white fw-semibold mb-3 border-bottom pb-2 border-dark-blue">
+                <i class="bi bi-shield-check text-success me-2"></i>Verification Console
+            </h5>
+            
+            <!-- Real-time Verification Card -->
+            <div id="verification-card" class="verification-card flex-grow-1 d-flex flex-column align-items-center justify-content-center py-4">
+                
+                <!-- Waiting State -->
+                <div id="verification-waiting" class="text-center p-4">
+                    <div class="scanner-laser-container mb-4">
+                        <div class="scanner-frame"></div>
+                        <div class="scanner-laser"></div>
+                        <i class="bi bi-person-bounding-box text-muted-glow fs-1"></i>
+                    </div>
+                    <p class="text-silver fw-semibold mb-1">Waiting for Face Match</p>
+                    <p class="text-muted small">Place yourself in front of the scanner. Authentication takes less than a second.</p>
+                </div>
+                
+                <!-- Match Success State -->
+                <div id="verification-success" class="text-center w-100 d-none animate-slide-in">
+                    <div class="verified-avatar-wrapper mb-3">
+                        <img id="verified-photo" src="" alt="Employee Photo" class="verified-photo rounded-circle border border-success border-4 shadow">
+                        <div class="verified-badge bg-success shadow">
+                            <i class="bi bi-patch-check-fill text-white"></i>
+                        </div>
+                    </div>
+                    
+                    <h3 id="verified-name" class="text-white fw-bold mb-1">Hari</h3>
+                    <p id="verified-id" class="text-primary fw-semibold mb-3">ID: CRT-101</p>
+                    
+                    <div class="glass-card bg-success-glow-trans border border-success p-3 mx-4 text-start rounded">
+                        <div class="row g-2 small">
+                            <div class="col-6">
+                                <span class="text-muted d-block uppercase small">Department</span>
+                                <strong id="verified-dept" class="text-white">Chemical Analysis</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted d-block uppercase small">Status</span>
+                                <strong class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Checked In</strong>
+                            </div>
+                            <div class="col-6 mt-2">
+                                <span class="text-muted d-block uppercase small">Date</span>
+                                <strong id="verified-date" class="text-white">08-07-2026</strong>
+                            </div>
+                            <div class="col-6 mt-2">
+                                <span class="text-muted d-block uppercase small">Check-in Time</span>
+                                <strong id="verified-time" class="text-white">09:05:11 AM</strong>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <div class="alert alert-success-custom py-2 px-4 d-inline-block fw-bold fs-5 shadow border-success animate-pulse mb-0">
+                            <i class="bi bi-door-open-fill me-2"></i>VERIFIED - ENTER
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Monitor MJPEG image error
+    const feedImg = document.getElementById('attendance-feed');
+    const errOverlay = document.getElementById('camera-error-overlay');
+    
+    feedImg.onerror = function() {
+        feedImg.classList.add('d-none');
+        errOverlay.classList.remove('d-none');
+    };
+    
+    // Polling verified attendance check-ins
+    let lastProcessedId = null;
+    let lastProcessedTime = null;
+    
+    function checkLatestMatch() {
+        fetch('/api/latest_verification')
+            .then(res => res.json())
+            .then(data => {
+                if (data.employee_id) {
+                    // Check if it's a new verification to trigger voice
+                    const isNewMatch = (data.employee_id !== lastProcessedId || data.time !== lastProcessedTime);
+                    
+                    if (isNewMatch) {
+                        lastProcessedId = data.employee_id;
+                        lastProcessedTime = data.time;
+                        
+                        // Update DOM elements
+                        document.getElementById('verified-name').textContent = data.name;
+                        document.getElementById('verified-id').textContent = 'ID: ' + data.employee_id;
+                        document.getElementById('verified-dept').textContent = data.department;
+                        document.getElementById('verified-date').textContent = data.date;
+                        document.getElementById('verified-time').textContent = data.time;
+                        
+                        // Build sanitized image path using convention
+                        // e.g. /dataset/Name_ID/image1.jpg
+                        const sanitizedName = data.name.replace(/\s+/g, '_');
+                        document.getElementById('verified-photo').src = `/dataset/${sanitizedName}_${data.employee_id}/image1.jpg`;
+                        
+                        // Switch panel display states
+                        document.getElementById('verification-waiting').classList.add('d-none');
+                        const successPanel = document.getElementById('verification-success');
+                        successPanel.classList.remove('d-none');
+                        
+                        // Audio Text-To-Speech Feedback (SpeechSynthesis API)
+                        try {
+                            const nameSpeech = data.name;
+                            const utterance = new SpeechSynthesisUtterance(`${nameSpeech} verified. Please enter.`);
+                            utterance.rate = 1.0;
+                            utterance.pitch = 1.0;
+                            window.speechSynthesis.speak(utterance);
+                        } catch (e) {
+                            console.error("Text-to-speech failed:", e);
+                        }
+                    }
+                } else {
+                    // Revert to waiting state if 4 seconds since last verification
+                    document.getElementById('verification-waiting').classList.remove('d-none');
+                    document.getElementById('verification-success').classList.add('d-none');
+                }
+            })
+            .catch(err => console.error("Error polling latest verification:", err));
+    }
+    
+    // Poll every 1 second
+    setInterval(checkLatestMatch, 1000);
+</script>
+{% endblock %}

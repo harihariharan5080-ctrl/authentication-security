@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Report{% endblock %}
+
+{% block content %}
+<div class="row mb-4 no-print">
+    <div class="col">
+        <h2 class="text-white fw-bold mb-1">Attendance Reports</h2>
+        <p class="text-muted">Analyze, search, and export biometric checkout authentication history logs.</p>
+    </div>
+</div>
+
+<!-- Filters Panel (Hidden when printing) -->
+<div class="glass-card p-4 mb-4 no-print">
+    <h5 class="text-white fw-semibold mb-3 border-bottom pb-2 border-dark-blue">
+        <i class="bi bi-funnel-fill text-primary me-2"></i>Filter Records
+    </h5>
+    
+    <form id="filterForm" onsubmit="event.preventDefault(); loadReportData();">
+        <div class="row g-3">
+            <div class="col-12 col-md-4 col-lg-3">
+                <label for="empSearch" class="form-label text-silver small mb-1">Employee Search</label>
+                <input type="text" id="empSearch" class="form-control bg-transparent text-white border-dark-blue" placeholder="Search ID or name...">
+            </div>
+            
+            <div class="col-12 col-md-4 col-lg-3">
+                <label for="deptSelect" class="form-label text-silver small mb-1">Department</label>
+                <select id="deptSelect" class="form-select bg-transparent text-white border-dark-blue">
+                    <option value="" class="bg-dark-blue">All Departments</option>
+                    <!-- Filled dynamically -->
+                </select>
+            </div>
+            
+            <div class="col-12 col-sm-6 col-md-2 col-lg-2">
+                <label for="startDate" class="form-label text-silver small mb-1">Start Date</label>
+                <input type="date" id="startDate" class="form-control bg-transparent text-white border-dark-blue">
+            </div>
+            
+            <div class="col-12 col-sm-6 col-md-2 col-lg-2">
+                <label for="endDate" class="form-label text-silver small mb-1">End Date</label>
+                <input type="date" id="endDate" class="form-control bg-transparent text-white border-dark-blue">
+            </div>
+            
+            <div class="col-12 col-md-12 col-lg-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary-custom w-100 py-2"><i class="bi bi-search me-2"></i>Search</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Report Container -->
+<div class="glass-card p-4">
+    <!-- Action Toolbar -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3 no-print">
+        <h5 class="text-white fw-semibold mb-0"><i class="bi bi-file-earmark-text text-primary me-2"></i>Log Ledger</h5>
+        
+        <div class="export-buttons d-flex gap-2">
+            <a id="exportExcelBtn" href="{{ url_for('api_reports_export_excel') }}" class="btn btn-secondary-custom btn-sm py-2 px-3 fw-semibold">
+                <i class="bi bi-file-earmark-excel-fill text-success me-2"></i>Export Excel
+            </a>
+            <a id="exportCsvBtn" href="{{ url_for('api_reports_export_csv') }}" class="btn btn-secondary-custom btn-sm py-2 px-3 fw-semibold">
+                <i class="bi bi-file-earmark-spreadsheet-fill text-primary me-2"></i>Export CSV
+            </a>
+            <button onclick="window.print()" class="btn btn-secondary-custom btn-sm py-2 px-3 fw-semibold">
+                <i class="bi bi-printer-fill text-silver me-2"></i>Print Ledger
+            </button>
+        </div>
+    </div>
+    
+    <!-- Printable Header Banner (Only visible when printing) -->
+    <div class="print-header text-center mb-4">
+        <h2 class="fw-bold mb-1">CRT INDUSTRIES CHEMICAL LAB</h2>
+        <h5>Attendance Verification Ledger</h5>
+        <hr>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-responsive">
+        <table class="table table-custom align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Department</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Status</th>
+                </tr>
+            </thead>
+            <tbody id="reportsTableBody">
+                <!-- Populated dynamically via AJAX -->
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                        Querying registry database logs...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Load departments list
+        fetch('/api/departments')
+            .then(res => res.json())
+            .then(depts => {
+                const select = document.getElementById('deptSelect');
+                depts.forEach(dept => {
+                    const opt = document.createElement('option');
+                    opt.value = dept;
+                    opt.textContent = dept;
+                    opt.className = 'bg-dark-blue';
+                    select.appendChild(opt);
+                });
+            })
+            .catch(err => console.error("Error loading departments list:", err));
+            
+        // Initial data query
+        loadReportData();
+    });
+
+    function loadReportData() {
+        const empSearch = document.getElementById('empSearch').value;
+        const dept = document.getElementById('deptSelect').value;
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+        
+        // Update export buttons dynamically with filters
+        const queryParams = `search=${encodeURIComponent(empSearch)}&department=${encodeURIComponent(dept)}&start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+        document.getElementById('exportExcelBtn').href = `/api/reports/export/excel?${queryParams}`;
+        document.getElementById('exportCsvBtn').href = `/api/reports/export/csv?${queryParams}`;
+        
+        let url = `/api/reports/data?${queryParams}`;
+        
+        const tbody = document.getElementById('reportsTableBody');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4 text-silver">
+                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                    Retrieving filtered ledger sheets...
+                </td>
+            </tr>
+        `;
+        
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                <i class="bi bi-file-earmark-x fs-3 d-block mb-2"></i>No matching check-in records found.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                data.forEach(row => {
+                    const statusClass = row.status === 'Present' ? 'text-success fw-bold' : 'text-danger fw-bold';
+                    const statusIcon = row.status === 'Present' ? 'bi-check-circle-fill' : 'bi-x-circle-fill';
+                    
+                    html += `
+                        <tr>
+                            <td><span class="text-primary fw-bold">${row.employee_id}</span></td>
+                            <td><span class="text-white fw-semibold">${row.name}</span></td>
+                            <td>${row.department}</td>
+                            <td>${row.date}</td>
+                            <td>${row.time}</td>
+                            <td>
+                                <span class="${statusClass} d-flex align-items-center">
+                                    <i class="bi ${statusIcon} me-1"></i>${row.status}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+            })
+            .catch(err => {
+                console.error("Error fetching reports:", err);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-danger">
+                            <i class="bi bi-exclamation-triangle-fill fs-3 d-block mb-2"></i>Failed to fetch attendance records. Check server connection logs.
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+</script>
+{% endblock %}
