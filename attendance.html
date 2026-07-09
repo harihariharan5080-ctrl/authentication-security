@@ -2,11 +2,54 @@
 
 {% block title %}Live Attendance Scan{% endblock %}
 
+{% block extra_head %}
+<style>
+    /* Laser line scanning animation */
+    .laser-scan-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, transparent, rgba(220, 38, 38, 0.8), transparent);
+        box-shadow: 0 0 12px rgba(220, 38, 38, 0.9);
+        animation: scanline-move 5s linear infinite;
+        z-index: 5;
+        pointer-events: none;
+    }
+    
+    .laser-scan-line.success {
+        background: linear-gradient(90deg, transparent, rgba(22, 163, 74, 0.8), transparent);
+        box-shadow: 0 0 12px rgba(22, 163, 74, 0.9);
+    }
+
+    .verification-card-inner {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.85) 100%);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        min-height: 380px;
+    }
+    
+    .verified-badge {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
     <div class="col-12 col-md-8">
-        <h2 class="text-white fw-bold mb-1">Live Face ID Attendance</h2>
-        <p class="text-muted">Align face with the camera to mark daily attendance. Duplicate logs are automatically ignored.</p>
+        <h2 class="text-white fw-bold mb-1">Attendance Verification Terminal</h2>
+        <p class="text-silver mb-0 small">Secure biometric scanning node. Stand directly in front of the camera.</p>
     </div>
     <div class="col-12 col-md-4 text-md-end">
         <a href="{{ url_for('dashboard') }}" class="btn btn-secondary-custom px-4 py-2">
@@ -20,18 +63,23 @@
     <div class="col-12 col-xl-7">
         <div class="glass-card p-4">
             <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2 border-dark-blue">
-                <h5 class="text-white fw-semibold mb-0"><i class="bi bi-camera-video me-2 text-primary"></i>Live Scanner</h5>
-                <span class="badge bg-success-glow-trans text-success px-3 py-2 small d-flex align-items-center">
-                    <span class="status-indicator online me-2"></span> Scanner Active
+                <h5 class="text-white fw-semibold mb-0"><i class="bi bi-camera-video me-2 text-primary-glow"></i>Live Video Scan</h5>
+                <span class="badge bg-success-glow-trans text-success-glow px-3 py-2 small d-flex align-items-center">
+                    <span class="status-indicator online me-2"></span> Camera Sensing
                 </span>
             </div>
             
-            <div class="camera-stream-wrapper text-center rounded overflow-hidden position-relative">
-                <img id="attendance-feed" src="{{ url_for('video_feed') }}" alt="Camera Stream Loading..." class="img-fluid camera-stream">
-                <div id="camera-error-overlay" class="camera-error-overlay d-none">
+            <div class="camera-stream-wrapper text-center rounded overflow-hidden position-relative" style="min-height: 380px;">
+                <!-- Moving Laser scanner overlay -->
+                <div id="laser-bar" class="laser-scan-line"></div>
+                <div class="scanner-overlay" style="position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0,0,0,0.2) 50%), linear-gradient(90deg, rgba(255,0,0,0.03), rgba(0,255,0,0.01), rgba(0,0,255,0.03)); background-size: 100% 4px, 6px 100%; z-index:2;"></div>
+                
+                <img id="attendance-feed" src="{{ url_for('video_feed') }}" alt="Camera Stream Loading..." class="img-fluid camera-stream w-100 h-100" style="object-fit: cover; max-height: 480px;">
+                
+                <div id="camera-error-overlay" class="camera-error-overlay d-none z-3 position-absolute">
                     <i class="bi bi-camera-video-off text-danger fs-1 mb-3"></i>
-                    <p class="text-white fw-bold mb-1">Webcam Hardware Not Accessible</p>
-                    <p class="text-muted small">Check connection, permissions, or system access logs.</p>
+                    <p class="text-white fw-bold mb-1">Webcam Offline</p>
+                    <p class="text-muted small">Webcam is disabled or hardware is not accessible on this device node.</p>
                 </div>
             </div>
         </div>
@@ -39,62 +87,91 @@
 
     <!-- Live Verification Log Column -->
     <div class="col-12 col-xl-5">
-        <div class="glass-card p-4 h-100 d-flex flex-column">
-            <h5 class="text-white fw-semibold mb-3 border-bottom pb-2 border-dark-blue">
-                <i class="bi bi-shield-check text-success me-2"></i>Verification Console
+        <div class="glass-card p-4 h-100 d-flex flex-column gap-3">
+            <h5 class="text-white fw-semibold border-bottom pb-2 border-dark-blue mb-0">
+                <i class="bi bi-shield-check text-success-glow me-2"></i>Verification Console
             </h5>
             
-            <!-- Real-time Verification Card -->
-            <div id="verification-card" class="verification-card flex-grow-1 d-flex flex-column align-items-center justify-content-center py-4">
+            <!-- Real-time Verification Panel Card -->
+            <div id="verification-card" class="verification-card-inner flex-grow-1 d-flex flex-column align-items-center justify-content-center p-4 text-center">
                 
                 <!-- Waiting State -->
-                <div id="verification-waiting" class="text-center p-4">
-                    <div class="scanner-laser-container mb-4">
-                        <div class="scanner-frame"></div>
-                        <div class="scanner-laser"></div>
-                        <i class="bi bi-person-bounding-box text-muted-glow fs-1"></i>
+                <div id="verification-waiting" class="p-4">
+                    <div class="position-relative mb-4 d-inline-block p-4 rounded-circle" style="background: rgba(255,255,255,0.02); border: 2px dashed rgba(255,255,255,0.1);">
+                        <i class="bi bi-person-bounding-box text-silver fs-1" style="opacity: 0.6;"></i>
                     </div>
-                    <p class="text-silver fw-semibold mb-1">Waiting for Face Match</p>
-                    <p class="text-muted small">Place yourself in front of the scanner. Authentication takes less than a second.</p>
+                    <p class="text-white fw-bold mb-1">Awaiting Biometric Verification</p>
+                    <p class="text-muted small">Position face within camera viewport. Authentication will verify automatically.</p>
                 </div>
                 
                 <!-- Match Success State -->
-                <div id="verification-success" class="text-center w-100 d-none animate-slide-in">
-                    <div class="verified-avatar-wrapper mb-3">
-                        <img id="verified-photo" src="" alt="Employee Photo" class="verified-photo rounded-circle border border-success border-4 shadow">
-                        <div class="verified-badge bg-success shadow">
-                            <i class="bi bi-patch-check-fill text-white"></i>
+                <div id="verification-success" class="w-100 d-none">
+                    <div class="position-relative d-inline-block mb-3">
+                        <img id="verified-photo" src="" alt="Employee Photo" class="rounded-circle border border-success border-4 shadow-lg" style="width: 100px; height: 100px; object-fit: cover;">
+                        <div class="verified-badge bg-success text-white shadow">
+                            <i class="bi bi-patch-check-fill"></i>
                         </div>
                     </div>
                     
-                    <h3 id="verified-name" class="text-white fw-bold mb-1">Hari</h3>
-                    <p id="verified-id" class="text-primary fw-semibold mb-3">ID: CRT-101</p>
+                    <h4 id="verified-name" class="text-white fw-bold mb-1">-</h4>
+                    <span id="verified-id" class="badge bg-primary px-3 py-1.5 mb-4">ID: -</span>
                     
-                    <div class="glass-card bg-success-glow-trans border border-success p-3 mx-4 text-start rounded">
+                    <div class="glass-card border border-success p-3 mx-2 text-start rounded" style="background: rgba(22, 163, 74, 0.05);">
                         <div class="row g-2 small">
                             <div class="col-6">
-                                <span class="text-muted d-block uppercase small">Department</span>
-                                <strong id="verified-dept" class="text-white">Chemical Analysis</strong>
+                                <span class="text-muted d-block small text-uppercase">Department</span>
+                                <strong id="verified-dept" class="text-white">-</strong>
                             </div>
                             <div class="col-6">
-                                <span class="text-muted d-block uppercase small">Status</span>
-                                <strong class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Checked In</strong>
+                                <span class="text-muted d-block small text-uppercase">Designation</span>
+                                <strong id="verified-designation" class="text-white">-</strong>
                             </div>
                             <div class="col-6 mt-2">
-                                <span class="text-muted d-block uppercase small">Date</span>
-                                <strong id="verified-date" class="text-white">08-07-2026</strong>
+                                <span class="text-muted d-block small text-uppercase">Date</span>
+                                <strong id="verified-date" class="text-white">-</strong>
                             </div>
                             <div class="col-6 mt-2">
-                                <span class="text-muted d-block uppercase small">Check-in Time</span>
-                                <strong id="verified-time" class="text-white">09:05:11 AM</strong>
+                                <span class="text-muted d-block small text-uppercase">Check-in Time</span>
+                                <strong id="verified-time" class="text-white">-</strong>
                             </div>
                         </div>
                     </div>
                     
                     <div class="mt-4">
-                        <div class="alert alert-success-custom py-2 px-4 d-inline-block fw-bold fs-5 shadow border-success animate-pulse mb-0">
-                            <i class="bi bi-door-open-fill me-2"></i>VERIFIED - ENTER
+                        <div class="alert alert-success d-inline-block fw-bold py-2 px-4 shadow border-success animate-pulse mb-0" style="background: rgba(22,163,74,0.15); color: var(--success-glow);">
+                            <i class="bi bi-door-open-fill me-2"></i>VERIFIED - ACCESS GRANTED
                         </div>
+                    </div>
+                </div>
+                
+                <!-- Match Duplicate State -->
+                <div id="verification-duplicate" class="w-100 d-none">
+                    <div class="position-relative d-inline-block mb-3">
+                        <img id="duplicate-photo" src="" alt="Employee Photo" class="rounded-circle border border-warning border-4 shadow" style="width: 100px; height: 100px; object-fit: cover;">
+                        <div class="verified-badge bg-warning text-white shadow">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                        </div>
+                    </div>
+                    
+                    <h4 id="duplicate-name" class="text-white fw-bold mb-1">-</h4>
+                    <span id="duplicate-id" class="badge bg-warning text-white px-3 py-1.5 mb-4">ID: -</span>
+                    
+                    <div class="glass-card border border-warning p-3 mx-2 text-start rounded" style="background: rgba(245, 158, 11, 0.05);">
+                        <p class="text-warning fw-semibold text-center mb-0 small"><i class="bi bi-info-circle-fill me-1"></i>Attendance Already Recorded Today</p>
+                    </div>
+                </div>
+
+                <!-- Match Unknown State -->
+                <div id="verification-unknown" class="w-100 d-none">
+                    <div class="position-relative mb-3 d-inline-block p-4 rounded-circle bg-danger-glow-trans" style="border: 2px dashed var(--danger);">
+                        <i class="bi bi-shield-slash-fill text-danger fs-1 animate-pulse"></i>
+                    </div>
+                    
+                    <h4 class="text-danger fw-bold mb-1">Unknown Person</h4>
+                    <p class="text-muted small mb-4">Biometric verification failed. Face profile match not found in local registries.</p>
+                    
+                    <div class="glass-card border border-danger p-3 mx-2 text-start rounded" style="background: rgba(220, 38, 38, 0.05);">
+                        <p class="text-danger fw-semibold text-center mb-0 small"><i class="bi bi-exclamation-octagon-fill me-1"></i>Access Security Alert Triggered</p>
                     </div>
                 </div>
             </div>
@@ -105,66 +182,104 @@
 
 {% block extra_js %}
 <script>
-    // Monitor MJPEG image error
     const feedImg = document.getElementById('attendance-feed');
     const errOverlay = document.getElementById('camera-error-overlay');
+    const laserBar = document.getElementById('laser-bar');
     
     feedImg.onerror = function() {
         feedImg.classList.add('d-none');
         errOverlay.classList.remove('d-none');
+        laserBar.classList.add('d-none');
     };
     
-    // Polling verified attendance check-ins
     let lastProcessedId = null;
     let lastProcessedTime = null;
+    let lastProcessedStatus = null;
     
     function checkLatestMatch() {
         fetch('/api/latest_verification')
             .then(res => res.json())
             .then(data => {
                 if (data.employee_id) {
-                    // Check if it's a new verification to trigger voice
-                    const isNewMatch = (data.employee_id !== lastProcessedId || data.time !== lastProcessedTime);
+                    const isNewMatch = (data.employee_id !== lastProcessedId || data.time !== lastProcessedTime || data.status !== lastProcessedStatus);
                     
                     if (isNewMatch) {
                         lastProcessedId = data.employee_id;
                         lastProcessedTime = data.time;
+                        lastProcessedStatus = data.status;
                         
-                        // Update DOM elements
-                        document.getElementById('verified-name').textContent = data.name;
-                        document.getElementById('verified-id').textContent = 'ID: ' + data.employee_id;
-                        document.getElementById('verified-dept').textContent = data.department;
-                        document.getElementById('verified-date').textContent = data.date;
-                        document.getElementById('verified-time').textContent = data.time;
-                        
-                        // Build sanitized image path using convention
-                        // e.g. /dataset/Name_ID/image1.jpg
-                        const sanitizedName = data.name.replace(/\s+/g, '_');
-                        document.getElementById('verified-photo').src = `/dataset/${sanitizedName}_${data.employee_id}/image1.jpg`;
-                        
-                        // Switch panel display states
+                        // Clean states
                         document.getElementById('verification-waiting').classList.add('d-none');
-                        const successPanel = document.getElementById('verification-success');
-                        successPanel.classList.remove('d-none');
+                        document.getElementById('verification-success').classList.add('d-none');
+                        document.getElementById('verification-duplicate').classList.add('d-none');
+                        document.getElementById('verification-unknown').classList.add('d-none');
+                        laserBar.className = "laser-scan-line"; // Reset class
                         
-                        // Audio Text-To-Speech Feedback (SpeechSynthesis API)
-                        try {
-                            const nameSpeech = data.name;
-                            const utterance = new SpeechSynthesisUtterance(`${nameSpeech} verified. Please enter.`);
-                            utterance.rate = 1.0;
-                            utterance.pitch = 1.0;
-                            window.speechSynthesis.speak(utterance);
-                        } catch (e) {
-                            console.error("Text-to-speech failed:", e);
+                        if (data.status === 'Present') {
+                            // Success Present state
+                            document.getElementById('verified-name').textContent = data.name;
+                            document.getElementById('verified-id').textContent = 'ID: ' + data.employee_id;
+                            document.getElementById('verified-dept').textContent = data.department;
+                            document.getElementById('verified-designation').textContent = data.designation || 'N/A';
+                            document.getElementById('verified-date').textContent = data.date;
+                            document.getElementById('verified-time').textContent = data.time;
+                            
+                            const sanitizedName = data.name.replace(/\s+/g, '_');
+                            document.getElementById('verified-photo').src = `/dataset/${sanitizedName}_${data.employee_id}/image1.jpg`;
+                            document.getElementById('verified-photo').onerror = function() {
+                                this.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%236c757d'><rect width='100%23' height='100%23' fill='%231e293b'/><text x='50%23' y='50%23' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%23a0aec0'>CRT</text></svg>";
+                            };
+                            
+                            document.getElementById('verification-success').classList.remove('d-none');
+                            laserBar.classList.add('success');
+                            
+                            // Speak confirmation
+                            speakMessage(`${data.name} verified. Check in recorded.`);
+                        } 
+                        else if (data.status === 'Duplicate') {
+                            // Duplicate warning state
+                            document.getElementById('duplicate-name').textContent = data.name;
+                            document.getElementById('duplicate-id').textContent = 'ID: ' + data.employee_id;
+                            
+                            const sanitizedName = data.name.replace(/\s+/g, '_');
+                            document.getElementById('duplicate-photo').src = `/dataset/${sanitizedName}_${data.employee_id}/image1.jpg`;
+                            document.getElementById('duplicate-photo').onerror = function() {
+                                this.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%236c757d'><rect width='100%23' height='100%23' fill='%231e293b'/><text x='50%23' y='50%23' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%23a0aec0'>CRT</text></svg>";
+                            };
+                            
+                            document.getElementById('verification-duplicate').classList.remove('d-none');
+                            
+                            speakMessage("Attendance already recorded today.");
+                        } 
+                        else if (data.status === 'Unknown') {
+                            // Unknown face warning state
+                            document.getElementById('verification-unknown').classList.remove('d-none');
+                            laserBar.classList.add('danger');
+                            
+                            speakMessage("Access Denied. Unknown Face.");
                         }
                     }
                 } else {
                     // Revert to waiting state if 4 seconds since last verification
                     document.getElementById('verification-waiting').classList.remove('d-none');
                     document.getElementById('verification-success').classList.add('d-none');
+                    document.getElementById('verification-duplicate').classList.add('d-none');
+                    document.getElementById('verification-unknown').classList.add('d-none');
+                    laserBar.className = "laser-scan-line";
                 }
             })
             .catch(err => console.error("Error polling latest verification:", err));
+    }
+    
+    function speakMessage(msg) {
+        try {
+            window.speechSynthesis.cancel(); // Cancel current utterances
+            const utterance = new SpeechSynthesisUtterance(msg);
+            utterance.rate = 1.0;
+            window.speechSynthesis.speak(utterance);
+        } catch (e) {
+            console.error("Text-to-speech failed:", e);
+        }
     }
     
     // Poll every 1 second

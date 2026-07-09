@@ -1,74 +1,182 @@
 {% extends "base.html" %}
 
-{% block title %}Attendance Report{% endblock %}
+{% block title %}Attendance Analytics{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Styling for metrics on reports */
+    .report-stat-card {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%);
+        border: 1px solid var(--border-color);
+        padding: 16px;
+        border-radius: var(--radius-md);
+    }
+    
+    .quick-filter-btn {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border-color);
+        color: var(--silver);
+        font-size: 0.8rem;
+        padding: 6px 12px;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+    }
+    
+    .quick-filter-btn:hover, .quick-filter-btn.active {
+        background: var(--primary);
+        color: #fff;
+        border-color: var(--primary-glow);
+    }
+    
+    /* Print overrides */
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        body {
+            background: #fff !important;
+            color: #000 !important;
+        }
+        .main-navbar, .sidebar {
+            display: none !important;
+        }
+        .main-content {
+            margin-left: 0 !important;
+            width: 100% !important;
+            padding: 0 !important;
+            background: #fff !important;
+        }
+        .glass-card {
+            background: #fff !important;
+            color: #000 !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .table-custom th {
+            color: #000 !important;
+            border-bottom: 2px solid #000 !important;
+        }
+        .table-custom td {
+            color: #333 !important;
+            border-bottom: 1px solid #ccc !important;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="row mb-4 no-print">
     <div class="col">
-        <h2 class="text-white fw-bold mb-1">Attendance Reports</h2>
-        <p class="text-muted">Analyze, search, and export biometric checkout authentication history logs.</p>
+        <h2 class="text-white fw-bold mb-1">Attendance Analytics & Reports</h2>
+        <p class="text-silver mb-0 small">Filter attendance logs, analyze statistics, and compile exports.</p>
     </div>
 </div>
 
-<!-- Filters Panel (Hidden when printing) -->
+<!-- Quick Range Filters & Search Panel (Hidden when printing) -->
 <div class="glass-card p-4 mb-4 no-print">
-    <h5 class="text-white fw-semibold mb-3 border-bottom pb-2 border-dark-blue">
-        <i class="bi bi-funnel-fill text-primary me-2"></i>Filter Records
-    </h5>
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3 border-bottom pb-2 border-dark-blue">
+        <h6 class="text-white fw-bold mb-0 small uppercase tracking-wide"><i class="bi bi-funnel-fill text-primary-glow me-2"></i>Filter Records</h6>
+        <div class="d-flex gap-2">
+            <button onclick="setQuickFilter('today')" class="quick-filter-btn active" id="btn-today">Today</button>
+            <button onclick="setQuickFilter('yesterday')" class="quick-filter-btn" id="btn-yesterday">Yesterday</button>
+            <button onclick="setQuickFilter('weekly')" class="quick-filter-btn" id="btn-weekly">Weekly</button>
+            <button onclick="setQuickFilter('monthly')" class="quick-filter-btn" id="btn-monthly">Monthly</button>
+        </div>
+    </div>
     
     <form id="filterForm" onsubmit="event.preventDefault(); loadReportData();">
         <div class="row g-3">
-            <div class="col-12 col-md-4 col-lg-3">
-                <label for="empSearch" class="form-label text-silver small mb-1">Employee Search</label>
-                <input type="text" id="empSearch" class="form-control bg-transparent text-white border-dark-blue" placeholder="Search ID or name...">
+            <div class="col-12 col-md-4">
+                <label for="empSearch" class="form-label-custom">Search Employee</label>
+                <input type="text" id="empSearch" class="form-control form-control-custom w-100" placeholder="ID or name...">
             </div>
             
-            <div class="col-12 col-md-4 col-lg-3">
-                <label for="deptSelect" class="form-label text-silver small mb-1">Department</label>
-                <select id="deptSelect" class="form-select bg-transparent text-white border-dark-blue">
-                    <option value="" class="bg-dark-blue">All Departments</option>
+            <div class="col-12 col-md-4">
+                <label for="deptSelect" class="form-label-custom">Department</label>
+                <select id="deptSelect" class="form-select form-control-custom w-100">
+                    <option value="">All Departments</option>
                     <!-- Filled dynamically -->
                 </select>
             </div>
             
-            <div class="col-12 col-sm-6 col-md-2 col-lg-2">
-                <label for="startDate" class="form-label text-silver small mb-1">Start Date</label>
-                <input type="date" id="startDate" class="form-control bg-transparent text-white border-dark-blue">
+            <div class="col-12 col-sm-6 col-md-2">
+                <label for="startDate" class="form-label-custom">Start Date</label>
+                <input type="date" id="startDate" class="form-control form-control-custom w-100">
             </div>
             
-            <div class="col-12 col-sm-6 col-md-2 col-lg-2">
-                <label for="endDate" class="form-label text-silver small mb-1">End Date</label>
-                <input type="date" id="endDate" class="form-control bg-transparent text-white border-dark-blue">
+            <div class="col-12 col-sm-6 col-md-2">
+                <label for="endDate" class="form-label-custom">End Date</label>
+                <input type="date" id="endDate" class="form-control form-control-custom w-100">
             </div>
             
-            <div class="col-12 col-md-12 col-lg-2 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary-custom w-100 py-2"><i class="bi bi-search me-2"></i>Search</button>
+            <div class="col-12 mt-3 text-end">
+                <button type="submit" class="btn btn-primary-custom px-4 py-2"><i class="bi bi-search me-1"></i>Search Database</button>
             </div>
         </div>
     </form>
+</div>
+
+<!-- Report Summary cards (Present %, Absent %, Late entries, Total) -->
+<div class="row mb-4 g-3">
+    <div class="col-6 col-md-3">
+        <div class="report-stat-card d-flex align-items-center">
+            <div class="stat-icon bg-success-glow-trans text-success-glow p-2 small"><i class="bi bi-check-circle-fill"></i></div>
+            <div class="ms-2">
+                <span class="text-silver small d-block" style="font-size: 0.72rem;">Present Rate</span>
+                <strong class="text-white" id="rep-present-rate">0%</strong>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="report-stat-card d-flex align-items-center">
+            <div class="stat-icon bg-danger-glow-trans text-danger-glow p-2 small"><i class="bi bi-x-circle-fill"></i></div>
+            <div class="ms-2">
+                <span class="text-silver small d-block" style="font-size: 0.72rem;">Absent Rate</span>
+                <strong class="text-white" id="rep-absent-rate">0%</strong>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="report-stat-card d-flex align-items-center">
+            <div class="stat-icon bg-warning-glow-trans text-warning-glow p-2 small"><i class="bi bi-clock-fill"></i></div>
+            <div class="ms-2">
+                <span class="text-silver small d-block" style="font-size: 0.72rem;">Late Entries</span>
+                <strong class="text-white" id="rep-late-entries">0</strong>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="report-stat-card d-flex align-items-center">
+            <div class="stat-icon bg-primary-glow-trans text-primary-glow p-2 small"><i class="bi bi-people-fill"></i></div>
+            <div class="ms-2">
+                <span class="text-silver small d-block" style="font-size: 0.72rem;">Total Checked</span>
+                <strong class="text-white" id="rep-total-checked">0</strong>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Report Container -->
 <div class="glass-card p-4">
     <!-- Action Toolbar -->
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3 no-print">
-        <h5 class="text-white fw-semibold mb-0"><i class="bi bi-file-earmark-text text-primary me-2"></i>Log Ledger</h5>
+        <h5 class="text-white fw-semibold mb-0"><i class="bi bi-file-earmark-text text-primary-glow me-2"></i>Log Ledger</h5>
         
         <div class="export-buttons d-flex gap-2">
             <a id="exportExcelBtn" href="{{ url_for('api_reports_export_excel') }}" class="btn btn-secondary-custom btn-sm py-2 px-3 fw-semibold">
-                <i class="bi bi-file-earmark-excel-fill text-success me-2"></i>Export Excel
+                <i class="bi bi-file-earmark-excel-fill text-success-glow me-2"></i>Export Excel
             </a>
             <a id="exportCsvBtn" href="{{ url_for('api_reports_export_csv') }}" class="btn btn-secondary-custom btn-sm py-2 px-3 fw-semibold">
-                <i class="bi bi-file-earmark-spreadsheet-fill text-primary me-2"></i>Export CSV
+                <i class="bi bi-file-earmark-spreadsheet-fill text-primary-glow me-2"></i>Export CSV
             </a>
-            <button onclick="window.print()" class="btn btn-secondary-custom btn-sm py-2 px-3 fw-semibold">
+            <button onclick="printLedger()" class="btn btn-secondary-custom btn-sm py-2 px-3 fw-semibold">
                 <i class="bi bi-printer-fill text-silver me-2"></i>Print Ledger
             </button>
         </div>
     </div>
     
     <!-- Printable Header Banner (Only visible when printing) -->
-    <div class="print-header text-center mb-4">
+    <div class="print-header d-none text-center mb-4" id="print-banner">
         <h2 class="fw-bold mb-1">CRT INDUSTRIES CHEMICAL LAB</h2>
         <h5>Attendance Verification Ledger</h5>
         <hr>
@@ -82,17 +190,17 @@
                     <th scope="col">ID</th>
                     <th scope="col">Name</th>
                     <th scope="col">Department</th>
+                    <th scope="col">Designation</th>
                     <th scope="col">Date</th>
                     <th scope="col">Time</th>
                     <th scope="col">Status</th>
                 </tr>
             </thead>
             <tbody id="reportsTableBody">
-                <!-- Populated dynamically via AJAX -->
                 <tr>
-                    <td colspan="6" class="text-center py-4 text-muted">
-                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-                        Querying registry database logs...
+                    <td colspan="7" class="text-center py-4 text-muted">
+                        <div class="spinner-border spinner-border-sm text-primary-glow me-2" role="status"></div>
+                        Querying database logs...
                     </td>
                 </tr>
             </tbody>
@@ -104,6 +212,9 @@
 {% block extra_js %}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        // Automatically set filters to Today initially
+        setQuickFilter('today');
+        
         // Load departments list
         fetch('/api/departments')
             .then(res => res.json())
@@ -113,15 +224,49 @@
                     const opt = document.createElement('option');
                     opt.value = dept;
                     opt.textContent = dept;
-                    opt.className = 'bg-dark-blue';
                     select.appendChild(opt);
                 });
             })
-            .catch(err => console.error("Error loading departments list:", err));
-            
-        // Initial data query
-        loadReportData();
+            .catch(err => console.error("Error loading departments:", err));
     });
+
+    function setQuickFilter(range) {
+        // Toggle active button style
+        document.querySelectorAll('.quick-filter-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`btn-${range}`).classList.add('active');
+        
+        const startInput = document.getElementById('startDate');
+        const endInput = document.getElementById('endDate');
+        
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        
+        if (range === 'today') {
+            startInput.value = todayStr;
+            endInput.value = todayStr;
+        } 
+        else if (range === 'yesterday') {
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            const yestStr = yesterday.toISOString().split('T')[0];
+            startInput.value = yestStr;
+            endInput.value = yestStr;
+        } 
+        else if (range === 'weekly') {
+            const lastWeek = new Date(today);
+            lastWeek.setDate(today.getDate() - 7);
+            startInput.value = lastWeek.toISOString().split('T')[0];
+            endInput.value = todayStr;
+        } 
+        else if (range === 'monthly') {
+            const lastMonth = new Date(today);
+            lastMonth.setDate(today.getDate() - 30);
+            startInput.value = lastMonth.toISOString().split('T')[0];
+            endInput.value = todayStr;
+        }
+        
+        loadReportData();
+    }
 
     function loadReportData() {
         const empSearch = document.getElementById('empSearch').value;
@@ -129,18 +274,17 @@
         const start = document.getElementById('startDate').value;
         const end = document.getElementById('endDate').value;
         
-        // Update export buttons dynamically with filters
         const queryParams = `search=${encodeURIComponent(empSearch)}&department=${encodeURIComponent(dept)}&start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
         document.getElementById('exportExcelBtn').href = `/api/reports/export/excel?${queryParams}`;
         document.getElementById('exportCsvBtn').href = `/api/reports/export/csv?${queryParams}`;
         
         let url = `/api/reports/data?${queryParams}`;
-        
         const tbody = document.getElementById('reportsTableBody');
+        
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center py-4 text-silver">
-                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                <td colspan="7" class="text-center py-4 text-silver">
+                    <div class="spinner-border spinner-border-sm text-primary-glow me-2" role="status"></div>
                     Retrieving filtered ledger sheets...
                 </td>
             </tr>
@@ -152,24 +296,46 @@
                 if (data.length === 0) {
                     tbody.innerHTML = `
                         <tr>
-                            <td colspan="6" class="text-center py-4 text-muted">
+                            <td colspan="7" class="text-center py-4 text-muted">
                                 <i class="bi bi-file-earmark-x fs-3 d-block mb-2"></i>No matching check-in records found.
                             </td>
                         </tr>
                     `;
+                    updateMetrics(0, 0, 0);
                     return;
                 }
                 
                 let html = '';
+                let presents = 0;
+                let absents = 0;
+                let lates = 0;
+                
                 data.forEach(row => {
                     const statusClass = row.status === 'Present' ? 'text-success fw-bold' : 'text-danger fw-bold';
                     const statusIcon = row.status === 'Present' ? 'bi-check-circle-fill' : 'bi-x-circle-fill';
+                    
+                    if (row.status === 'Present') {
+                        presents++;
+                        
+                        // Parse time for simulated late calculations (standard threshold: check-in after 09:15:00)
+                        if (row.time && row.time !== 'N/A') {
+                            const checkTime = row.time.split(':');
+                            const hrs = parseInt(checkTime[0]);
+                            const mins = parseInt(checkTime[1]);
+                            if (hrs > 9 || (hrs === 9 && mins > 15)) {
+                                lates++;
+                            }
+                        }
+                    } else {
+                        absents++;
+                    }
                     
                     html += `
                         <tr>
                             <td><span class="text-primary fw-bold">${row.employee_id}</span></td>
                             <td><span class="text-white fw-semibold">${row.name}</span></td>
                             <td>${row.department}</td>
+                            <td>${row.designation || 'N/A'}</td>
                             <td>${row.date}</td>
                             <td>${row.time}</td>
                             <td>
@@ -180,18 +346,38 @@
                         </tr>
                     `;
                 });
+                
                 tbody.innerHTML = html;
+                updateMetrics(presents, absents, lates);
             })
             .catch(err => {
-                console.error("Error fetching reports:", err);
+                console.error("Error loading reports:", err);
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="text-center py-4 text-danger">
+                        <td colspan="7" class="text-center py-4 text-danger">
                             <i class="bi bi-exclamation-triangle-fill fs-3 d-block mb-2"></i>Failed to fetch attendance records. Check server connection logs.
                         </td>
                     </tr>
                 `;
             });
+    }
+    
+    function updateMetrics(presents, absents, lates) {
+        const total = presents + absents;
+        const presentRate = total > 0 ? Math.round((presents / total) * 100) : 0;
+        const absentRate = total > 0 ? Math.round((absents / total) * 100) : 0;
+        
+        document.getElementById('rep-present-rate').textContent = presentRate + "%";
+        document.getElementById('rep-absent-rate').textContent = absentRate + "%";
+        document.getElementById('rep-late-entries').textContent = lates;
+        document.getElementById('rep-total-checked').textContent = total;
+    }
+
+    function printLedger() {
+        const banner = document.getElementById('print-banner');
+        banner.classList.remove('d-none');
+        window.print();
+        banner.classList.add('d-none');
     }
 </script>
 {% endblock %}

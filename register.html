@@ -2,11 +2,48 @@
 
 {% block title %}Register Employee{% endblock %}
 
+{% block extra_head %}
+<style>
+    /* Face alignment guide circle overlay */
+    .face-guide-circle {
+        position: absolute;
+        width: 240px;
+        height: 240px;
+        border: 2px dashed rgba(59, 130, 246, 0.6);
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        z-index: 5;
+        box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.4);
+    }
+    
+    .face-guide-circle.active {
+        border-color: var(--success);
+        box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.3);
+    }
+    
+    /* Live Hud tags */
+    .hud-tag {
+        position: absolute;
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid var(--border-color);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.7rem;
+        z-index: 6;
+        color: #fff;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
     <div class="col">
-        <h2 class="text-white fw-bold mb-1">Employee Registration</h2>
-        <p class="text-muted">Register a new lab employee and encode their Face ID profile.</p>
+        <h2 class="text-white fw-bold mb-1">Employee Face Registration</h2>
+        <p class="text-silver mb-0 small">Create a new biometric record. Registration is strictly webcam-based.</p>
     </div>
 </div>
 
@@ -15,81 +52,106 @@
     <div class="col-12 col-lg-5">
         <div class="glass-card p-4">
             <h5 class="text-white fw-semibold mb-3 border-bottom pb-2 border-dark-blue">
-                <i class="bi bi-person-lines-fill text-primary me-2"></i>Employee Details
+                <i class="bi bi-person-lines-fill text-primary-glow me-2"></i>Profile Details
             </h5>
             
             <form id="registerForm" class="needs-validation" novalidate>
-                <div class="mb-3">
-                    <label for="employee_id" class="form-label text-silver small mb-1">Employee ID <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control bg-transparent text-white border-dark-blue" id="employee_id" name="employee_id" placeholder="e.g. CRT-105" required>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label for="employee_id" class="form-label-custom">Employee ID <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-custom w-100" id="employee_id" name="employee_id" placeholder="CRT-105" required>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label for="name" class="form-label-custom">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-custom w-100" id="name" name="name" placeholder="John Doe" required>
+                    </div>
+                    
+                    <div class="col-12 col-md-6">
+                        <label for="department" class="form-label-custom">Department</label>
+                        <select class="form-select form-control-custom w-100" id="department" name="department">
+                            <option value="Research & Development">Research & Development</option>
+                            <option value="Chemical Analysis" selected>Chemical Analysis</option>
+                            <option value="Quality Assurance">Quality Assurance</option>
+                            <option value="Safety & Compliance">Safety & Compliance</option>
+                            <option value="Logistics & Storage">Logistics & Storage</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label for="designation" class="form-label-custom">Designation</label>
+                        <input type="text" class="form-control form-control-custom w-100" id="designation" name="designation" placeholder="Lead Analyst" required>
+                    </div>
+                    
+                    <div class="col-12">
+                        <label for="phone" class="form-label-custom">Mobile Number</label>
+                        <input type="tel" class="form-control form-control-custom w-100" id="phone" name="phone" placeholder="e.g. +1234567890">
+                    </div>
+                    
+                    <div class="col-12">
+                        <label for="email" class="form-label-custom">Email Address</label>
+                        <input type="email" class="form-control form-control-custom w-100" id="email" name="email" placeholder="name@crt.com">
+                    </div>
+                    
+                    <div class="col-12">
+                        <label for="date_of_joining" class="form-label-custom">Date of Joining</label>
+                        <input type="date" class="form-control form-control-custom w-100" id="date_of_joining" name="date_of_joining" required>
+                    </div>
                 </div>
                 
-                <div class="mb-3">
-                    <label for="name" class="form-label text-silver small mb-1">Employee Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control bg-transparent text-white border-dark-blue" id="name" name="name" placeholder="Full Name" required>
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" id="startScanBtn" class="btn btn-primary-custom flex-grow-1 py-3 fw-bold">
+                        <i class="bi bi-camera-fill me-2"></i>Start Camera
+                    </button>
+                    <button type="button" class="btn btn-secondary-custom px-3" onclick="resetFormState()">
+                        Reset
+                    </button>
                 </div>
-                
-                <div class="mb-3">
-                    <label for="department" class="form-label text-silver small mb-1">Department</label>
-                    <select class="form-select bg-transparent text-white border-dark-blue" id="department" name="department">
-                        <option value="Research & Development" class="bg-dark-blue">Research & Development</option>
-                        <option value="Chemical Analysis" class="bg-dark-blue" selected>Chemical Analysis</option>
-                        <option value="Quality Assurance" class="bg-dark-blue">Quality Assurance</option>
-                        <option value="Safety & Compliance" class="bg-dark-blue">Safety & Compliance</option>
-                        <option value="Logistics & Storage" class="bg-dark-blue">Logistics & Storage</option>
-                    </select>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="phone" class="form-label text-silver small mb-1">Mobile Number</label>
-                    <input type="tel" class="form-control bg-transparent text-white border-dark-blue" id="phone" name="phone" placeholder="10-digit number">
-                </div>
-                
-                <div class="mb-3">
-                    <label for="email" class="form-label text-silver small mb-1">Email Address</label>
-                    <input type="email" class="form-control bg-transparent text-white border-dark-blue" id="email" name="email" placeholder="name@crt.com">
-                </div>
-                
-                <button type="submit" id="startScanBtn" class="btn btn-primary-custom w-100 py-3 mt-3 fw-bold">
-                    <i class="bi bi-camera-fill me-2"></i>Start Face Scan
-                </button>
             </form>
         </div>
     </div>
 
     <!-- Live Scanner Feed -->
     <div class="col-12 col-lg-7">
-        <div class="glass-card p-4 h-100 d-flex flex-column">
-            <h5 class="text-white fw-semibold mb-3 border-bottom pb-2 border-dark-blue">
-                <i class="bi bi-camera-video me-2 text-primary"></i>Face Enrollment Scanner
+        <div class="glass-card p-4 h-100 d-flex flex-column gap-3">
+            <h5 class="text-white fw-semibold border-bottom pb-2 border-dark-blue mb-0">
+                <i class="bi bi-camera-video me-2 text-primary-glow"></i>Face Enrollment Scanner
             </h5>
             
             <!-- Video Preview Box -->
-            <div class="camera-stream-wrapper text-center rounded overflow-hidden position-relative flex-grow-1 d-flex align-items-center justify-content-center bg-black-tint min-height-320">
-                <img id="register-feed" src="" alt="Webcam feed inactive" class="img-fluid camera-stream d-none">
+            <div class="camera-stream-wrapper text-center rounded overflow-hidden position-relative flex-grow-1 d-flex align-items-center justify-content-center bg-black" style="min-height: 380px;">
+                <!-- Face Alignment circle guide -->
+                <div id="alignment-guide" class="face-guide-circle d-none"></div>
                 
-                <!-- Placeholder overlay when camera is not scanning -->
+                <!-- HUD tags -->
+                <div id="quality-hud" class="hud-tag d-none" style="top: 15px; left: 15px;">QUALITY: <span class="text-success" id="quality-val">OPTIMAL</span></div>
+                <div id="timer-hud" class="hud-tag d-none" style="top: 15px; right: 15px;">ETA: <span class="text-primary-glow" id="countdown-val">5s</span></div>
+                <div id="guidance-hud" class="hud-tag d-none w-75 text-center" style="bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(37,99,235,0.9); border-color: var(--primary-glow); font-size: 0.85rem; font-weight: 600;">
+                    <span id="guidance-msg">ALIGN YOUR FACE</span>
+                </div>
+                
+                <img id="register-feed" src="" alt="Webcam feed inactive" class="img-fluid camera-stream w-100 h-100 d-none" style="object-fit: cover;">
+                
+                <!-- Offline Placeholder -->
                 <div id="camera-placeholder" class="camera-placeholder text-center p-4">
                     <i class="bi bi-camera-video-off text-muted fs-1 mb-3"></i>
                     <p class="text-silver fw-semibold mb-1">Scanner Offline</p>
-                    <p class="text-muted small">Fill out the employee profile and click "Start Face Scan" to engage the camera.</p>
+                    <p class="text-muted small">Fill out details and trigger camera to engage enrollment scan.</p>
                 </div>
                 
                 <!-- Bounding Box Scanning Indicator -->
-                <div id="scan-progress-overlay" class="scan-progress-overlay d-none">
+                <div id="scan-progress-overlay" class="scan-progress-overlay d-none z-3 position-absolute">
                     <div class="spinner-border text-primary-glow mb-2" role="status"></div>
-                    <p id="scan-progress-text" class="text-white fw-semibold mb-0">Detecting Face...</p>
+                    <p id="scan-progress-text" class="text-white fw-semibold mb-0">Engaging Scanner...</p>
                 </div>
             </div>
             
             <!-- Capture Progress Meter -->
-            <div class="mt-3">
+            <div>
                 <div class="d-flex justify-content-between text-silver small mb-1">
-                    <span>Scan progress (30 frames required)</span>
-                    <span id="progress-percent">0%</span>
+                    <span>Biometric Compiled Progress</span>
+                    <span id="progress-percent" class="fw-bold">0%</span>
                 </div>
-                <div class="progress progress-custom" style="height: 10px;">
-                    <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                <div class="progress" style="height: 8px; background: rgba(255, 255, 255, 0.05);">
+                    <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
             </div>
         </div>
@@ -101,16 +163,16 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content glass-card border border-success">
             <div class="modal-header border-bottom border-dark-blue text-white">
-                <h5 class="modal-title" id="successModalLabel"><i class="bi bi-check-circle-fill text-success me-2"></i>Registration Success</h5>
+                <h5 class="modal-title" id="successModalLabel"><i class="bi bi-check-circle-fill text-success-glow me-2"></i>Registration Success</h5>
             </div>
             <div class="modal-body text-center py-4">
                 <div class="success-checkmark mb-3">
-                    <i class="bi bi-shield-check text-success fs-1"></i>
+                    <i class="bi bi-shield-check text-success-glow fs-1"></i>
                 </div>
-                <h5 class="text-white mb-2" id="successEmployeeName">Employee Registered</h5>
-                <p class="text-muted" id="successEmployeeId">ID: CRT-000</p>
-                <div class="alert alert-success-custom mx-3 text-start small">
-                    <i class="bi bi-info-circle-fill me-2"></i>Biometric face templates have been successfully compiled and stored in local data vectors.
+                <h5 class="text-white mb-1" id="successEmployeeName">Employee Registered</h5>
+                <p class="text-muted small mb-3" id="successEmployeeId">ID: CRT-000</p>
+                <div class="alert alert-success mx-3 text-start small border-0" style="background: rgba(22, 163, 74, 0.1); color: var(--success-glow);">
+                    <i class="bi bi-info-circle-fill me-2"></i>Biometric face template compiled successfully and committed to database registers.
                 </div>
             </div>
             <div class="modal-footer border-top border-dark-blue">
@@ -122,5 +184,169 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/camera.js') }}"></script>
+<script>
+    // Overriding the script dynamically for customized quality gauges & guidance displays
+    let pollInterval = null;
+
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!this.checkValidity()) {
+            e.stopPropagation();
+            this.classList.add('was-validated');
+            return;
+        }
+        
+        const formData = new FormData(this);
+        const startBtn = document.getElementById('startScanBtn');
+        const inputs = this.querySelectorAll('input, select, button');
+        inputs.forEach(el => el.disabled = true);
+        
+        startBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Starting Scanner...`;
+        
+        fetch('/api/register/start', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const feedImg = document.getElementById('register-feed');
+                const placeholder = document.getElementById('camera-placeholder');
+                const overlay = document.getElementById('scan-progress-overlay');
+                
+                // Show Guide overlays
+                document.getElementById('alignment-guide').classList.remove('d-none');
+                document.getElementById('quality-hud').classList.remove('d-none');
+                document.getElementById('timer-hud').classList.remove('d-none');
+                document.getElementById('guidance-hud').classList.remove('d-none');
+                
+                placeholder.classList.add('d-none');
+                feedImg.src = "/video_feed";
+                feedImg.classList.remove('d-none');
+                overlay.classList.remove('d-none');
+                
+                startBtn.innerHTML = `<i class="bi bi-camera-fill me-2"></i>Scanning Face...`;
+                
+                // Start status checking loop
+                pollInterval = setInterval(pollRegistrationStatus, 300);
+            } else {
+                alert("Error starting registration: " + data.message);
+                inputs.forEach(el => el.disabled = false);
+                startBtn.innerHTML = `<i class="bi bi-camera-fill me-2"></i>Start Camera`;
+            }
+        })
+        .catch(err => {
+            console.error("Error starting camera:", err);
+            alert("Failed to engage scanner feed.");
+            inputs.forEach(el => el.disabled = false);
+            startBtn.innerHTML = `<i class="bi bi-camera-fill me-2"></i>Start Camera`;
+        });
+    });
+
+    function pollRegistrationStatus() {
+        fetch('/api/register/status')
+            .then(res => res.json())
+            .then(data => {
+                const progressBar = document.getElementById('progress-bar');
+                const progressPercent = document.getElementById('progress-percent');
+                const guidanceMsg = document.getElementById('guidance-msg');
+                const countdownVal = document.getElementById('countdown-val');
+                const qualityVal = document.getElementById('quality-val');
+                
+                if (data.status === 'capturing') {
+                    const count = data.count || 0;
+                    const percent = Math.min(Math.round((count / 30) * 100), 100);
+                    
+                    progressBar.style.width = `${percent}%`;
+                    progressPercent.textContent = `${percent}%`;
+                    
+                    // Countdown calculation (roughly 30 frames, at ~6 frames/sec, approx 5s total)
+                    const remaining = Math.max(0, Math.ceil((30 - count) / 6));
+                    countdownVal.textContent = `${remaining}s`;
+                    
+                    // Dynamic scan guidance messages
+                    if (count < 1) {
+                        guidanceMsg.textContent = "ALIGN YOUR FACE IN THE RING";
+                        qualityVal.textContent = "ANALYZING...";
+                        qualityVal.className = "text-warning";
+                    } else if (count < 6) {
+                        guidanceMsg.textContent = "LOOK STRAIGHT & KEEP STILL";
+                        qualityVal.textContent = "OPTIMAL";
+                        qualityVal.className = "text-success";
+                    } else if (count < 12) {
+                        guidanceMsg.textContent = "LOOK SLIGHTLY LEFT";
+                    } else if (count < 18) {
+                        guidanceMsg.textContent = "LOOK SLIGHTLY RIGHT";
+                    } else if (count < 24) {
+                        guidanceMsg.textContent = "LOOK SLIGHTLY UP";
+                    } else {
+                        guidanceMsg.textContent = "LOOK SLIGHTLY DOWN";
+                    }
+                } 
+                else if (data.status === 'done') {
+                    clearInterval(pollInterval);
+                    
+                    progressBar.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                    guidanceMsg.textContent = "REGISTRATION SUCCESSFUL";
+                    countdownVal.textContent = "0s";
+                    
+                    document.getElementById('successEmployeeName').textContent = document.getElementById('name').value;
+                    document.getElementById('successEmployeeId').textContent = 'ID: ' + document.getElementById('employee_id').value;
+                    
+                    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                    successModal.show();
+                } 
+                else if (data.status === 'failed' || data.status === 'error') {
+                    clearInterval(pollInterval);
+                    alert("Registration Failed: " + data.message);
+                    resetFormState();
+                }
+            })
+            .catch(err => {
+                console.error("Polling error:", err);
+                clearInterval(pollInterval);
+                alert("Connection lost during biometric capture.");
+                resetFormState();
+            });
+    }
+
+    function resetFormState() {
+        clearInterval(pollInterval);
+        
+        const feedImg = document.getElementById('register-feed');
+        const placeholder = document.getElementById('camera-placeholder');
+        const overlay = document.getElementById('scan-progress-overlay');
+        
+        // Hide overlays
+        document.getElementById('alignment-guide').classList.add('d-none');
+        document.getElementById('quality-hud').classList.add('d-none');
+        document.getElementById('timer-hud').classList.add('d-none');
+        document.getElementById('guidance-hud').classList.add('d-none');
+        
+        feedImg.src = "";
+        feedImg.classList.add('d-none');
+        overlay.classList.add('d-none');
+        placeholder.classList.remove('d-none');
+        
+        document.getElementById('progress-bar').style.width = '0%';
+        document.getElementById('progress-percent').textContent = '0%';
+        
+        // Re-enable form fields
+        const form = document.getElementById('registerForm');
+        form.reset();
+        form.classList.remove('was-validated');
+        
+        const inputs = form.querySelectorAll('input, select, button');
+        inputs.forEach(el => el.disabled = false);
+        document.getElementById('startScanBtn').innerHTML = `<i class="bi bi-camera-fill me-2"></i>Start Camera`;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        // Set date of joining automatically to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('date_of_joining').value = today;
+    });
+</script>
 {% endblock %}

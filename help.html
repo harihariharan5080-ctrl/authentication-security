@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}System Help & Manual{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2 class="text-white fw-bold mb-1">System Help Center</h2>
+        <p class="text-silver mb-0 small">Operator manuals and guidance tips for CRT Face ID Attendance console.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-12 col-lg-8">
+        <!-- FAQ Section -->
+        <div class="glass-card p-4 d-flex flex-column gap-3">
+            <h5 class="text-white fw-semibold border-bottom pb-2 border-dark-blue mb-0"><i class="bi bi-journal-text text-primary-glow me-2"></i>Biometric Scanner Manual</h5>
+            
+            <div class="accordion accordion-flush" id="accordionHelp" style="--bs-accordion-bg: transparent; --bs-accordion-color: var(--silver); --bs-accordion-btn-color: #fff; --bs-accordion-btn-bg: transparent; --bs-accordion-btn-icon-transform: rotate(-360deg);">
+                <div class="accordion-item border-bottom border-dark-blue">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed px-0 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                            How do I register a new employee face template?
+                        </button>
+                    </h2>
+                    <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordionHelp">
+                        <div class="accordion-body px-0 text-silver small">
+                            Go to the <strong>Register Employee</strong> panel, fill out the form metadata (Name, ID, Department, Designation, and Date of Joining), and click "Start Camera". Stand in front of the camera. The biometric console will automatically start capturing frames when a face is detected. Adjust your face based on the guidance prompt at the bottom of the screen (Look straight, Look Left, Look Right, etc.). Once 30 frames are captured, the server compiles the template.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item border-bottom border-dark-blue">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed px-0 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            What should I do if the camera feed fails to load?
+                        </button>
+                    </h2>
+                    <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionHelp">
+                        <div class="accordion-body px-0 text-silver small">
+                            Ensure the webcam is connected to the laptop/desktop. Check the device permissions in your browser to verify that the website has access to the camera hardware. If index conflicts occur, navigate to <strong>Settings > Camera Controls</strong> and try changing the index selection from 0 to 1.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item border-bottom border-dark-blue">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed px-0 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                            Where are attendance files and profile images stored?
+                        </button>
+                    </h2>
+                    <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#accordionHelp">
+                        <div class="accordion-body px-0 text-silver small">
+                            The CRT terminal operates strictly as an offline node for maximum laboratory security. All captured facial datasets and check-in ledgers are stored locally in the server's workspace folder (e.g. `dataset/` and `attendance/` directories) and are not synced with external networks.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar Info Panel -->
+    <div class="col-12 col-lg-4">
+        <div class="glass-card p-4 h-100 d-flex flex-column gap-3">
+            <h5 class="text-white fw-semibold border-bottom pb-2 border-dark-blue mb-0"><i class="bi bi-info-circle text-primary-glow me-2"></i>Quick Help</h5>
+            <div class="small text-silver d-flex flex-column gap-2">
+                <div>
+                    <strong class="text-white d-block">Optimal Capture Conditions:</strong>
+                    Ensure the subject's face is evenly lit. Avoid strong backlights or shadow casting. Remove glasses and caps during the registration process for higher recognition accuracy.
+                </div>
+                <div class="mt-2">
+                    <strong class="text-white d-block">Contact Security Admin:</strong>
+                    If you require profile data modifications or system resets, contact:
+                    <code class="d-block text-primary-glow mt-1 font-monospace">admin@crt.lab.internal</code>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

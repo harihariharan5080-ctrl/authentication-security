@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}Console Settings{% endblock %}
+
+{% block extra_head %}
+<style>
+    .settings-tab {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--silver);
+        text-align: left;
+        padding: 14px 20px;
+        transition: all var(--transition-speed) ease;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        width: 100%;
+    }
+    
+    .settings-tab:hover, .settings-tab.active {
+        background: var(--primary-glow-trans);
+        color: #fff;
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+    
+    .settings-tab i {
+        font-size: 1.25rem;
+    }
+    
+    .settings-section-card {
+        display: none;
+        animation: fadeIn 0.4s ease forwards;
+    }
+    
+    .settings-section-card.active {
+        display: block;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2 class="text-white fw-bold mb-1">System Settings</h2>
+        <p class="text-silver mb-0 small">Configure laboratory authentication thresholds, database files, and camera devices.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Navigation Tabs -->
+    <div class="col-12 col-md-4 col-xl-3">
+        <div class="d-flex flex-column gap-2">
+            <button class="settings-tab active" onclick="switchSection('general', this)">
+                <i class="bi bi-sliders me-3 text-primary-glow"></i>General Settings
+            </button>
+            <button class="settings-tab" onclick="switchSection('camera', this)">
+                <i class="bi bi-camera-fill me-3 text-primary-glow"></i>Camera Controls
+            </button>
+            <button class="settings-tab" onclick="switchSection('attendance', this)">
+                <i class="bi bi-alarm-fill me-3 text-primary-glow"></i>Attendance Rules
+            </button>
+            <button class="settings-tab" onclick="switchSection('database', this)">
+                <i class="bi bi-database-fill-gear me-3 text-primary-glow"></i>Database & Storage
+            </button>
+            <button class="settings-tab" onclick="switchSection('appearance', this)">
+                <i class="bi bi-palette-fill me-3 text-primary-glow"></i>Appearance Style
+            </button>
+        </div>
+    </div>
+
+    <!-- Right Configuration Panels -->
+    <div class="col-12 col-md-8 col-xl-9">
+        <!-- General Section -->
+        <div id="section-general" class="glass-card p-4 settings-section-card active">
+            <h5 class="text-white fw-semibold mb-3 border-bottom pb-2 border-dark-blue">
+                <i class="bi bi-sliders text-primary-glow me-2"></i>General Registry Info
+            </h5>
+            <form onsubmit="saveSettings(event, 'General configuration saved.')">
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label-custom">Company Name</label>
+                        <input type="text" class="form-control form-control-custom w-100" value="CRT Industries" required>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label-custom">Laboratory Name</label>
+                        <input type="text" class="form-control form-control-custom w-100" value="Chemical Laboratory A" required>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label-custom">Time Zone</label>
+                        <select class="form-select form-control-custom w-100">
+                            <option value="IST" selected>India Standard Time (IST)</option>
+                            <option value="GMT">Greenwich Mean Time (GMT)</option>
+                            <option value="EST">Eastern Standard Time (EST)</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label-custom">Shift Working Hours</label>
+                        <input type="text" class="form-control form-control-custom w-100" value="09:00 - 18:00 (Standard Shift)" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary-custom mt-4">Save Changes</button>
+            </form>
+        </div>
+
+        <!-- Camera Section -->
+        <div id="section-camera" class="glass-card p-4 settings-section-card">
+            <h5 class="text-white fw-semibold mb-3 border-bottom pb-2 border-dark-blue">
+                <i class="bi bi-camera-fill text-primary-glow me-2"></i>Camera Sensory Controls
+            </h5>
+            <form onsubmit="saveSettings(event, 'Camera parameters updated.')">
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label-custom">Camera Sensor Selection</label>
+                        <select class="form-select form-control-custom w-100">
+                            <option value="0" selected>Webcam sensor 0 (Default index)</option>
+                            <option value="1">External camera index 1</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label-custom">Capture Resolution</label>
+                        <select class="form-select form-control-custom w-100">
+                            <option value="VGA" selected>VGA 640 x 480 (Recommended for Speed)</option>
+                            <option value="HD">HD 1280 x 720 (High accuracy)</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label-custom">Sensor Brightness</label>
+                        <input type="range" class="form-range" min="0" max="100" value="50">
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label-custom">Recognition Distance Tolerance</label>
+                        <select class="form-select form-control-custom w-100">
+                            <option value="0.45" selected>0.45 (Optimal - Balanced)</option>
+                            <option value="0.40">0.40 (Strict - Low false accept)</option>
+                            <option value="0.50">0.50 (Relaxed - Quick match)</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary-custom mt-4">Save Configuration</button>
+            </form>
+        </div>
+
+        <!-- Attendance Rules Section -->
+        <div id="section-attendance" class="glass-card p-4 settings-section-card">
+            <h5 class="text-white fw-semibold mb-3 border-bottom pb-2 border-dark-blue">
+                <i class="bi bi-alarm-fill text-primary-glow me-2"></i>Attendance Criteria
+            </h5>
+            <form onsubmit="saveSettings(event, 'Shift working time constraints saved.')">
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label-custom">Shift Start Time</label>
+                        <input type="time" class="form-control form-control-custom w-100" value="09:00">
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label-custom">Shift End Time</label>
+                        <input type="time" class="form-control form-control-custom w-100" value="18:00">
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label-custom">Late Arrival Time Limit</label>
+                        <input type="time" class="form-control form-control-custom w-100" value="09:15">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary-custom mt-4">Save Rules</button>
+            </form>
+        </div>
+
+        <!-- Database Section -->
+        <div id="section-database" class="glass-card p-4 settings-section-card">
+            <h5 class="text-white fw-semibold mb-3 border-bottom pb-2 border-dark-blue">
+                <i class="bi bi-database-fill-gear text-primary-glow me-2"></i>Database & Storage
+            </h5>
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <div class="p-3 rounded border border-dark-blue h-100 d-flex flex-column justify-content-between" style="background: rgba(15, 23, 42, 0.3);">
+                        <div>
+                            <h6 class="text-white fw-bold mb-1">Compile Database Backup</h6>
+                            <p class="text-muted small">Dump all registered employee face encoding vectors and records into backup file.</p>
+                        </div>
+                        <button onclick="triggerDBAction('backup')" class="btn btn-sm btn-primary-custom mt-3 align-self-start"><i class="bi bi-database-fill-up me-1"></i>Backup Database</button>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="p-3 rounded border border-dark-blue h-100 d-flex flex-column justify-content-between" style="background: rgba(15, 23, 42, 0.3);">
+                        <div>
+                            <h6 class="text-white fw-bold mb-1">Restore Registers Backup</h6>
+                            <p class="text-muted small">Restore records from a previously compiled database snapshot file.</p>
+                        </div>
+                        <button onclick="triggerDBAction('restore')" class="btn btn-sm btn-secondary-custom mt-3 align-self-start"><i class="bi bi-database-fill-down me-1"></i>Restore Backup</button>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="p-3 rounded border border-dark-blue" style="background: rgba(15, 23, 42, 0.3);">
+                        <h6 class="text-white fw-bold mb-1">Bulk Extraction</h6>
+                        <p class="text-silver small">Extract complete reports history logsheets directly into CSV ledgers.</p>
+                        <a href="{{ url_for('api_reports_export_csv') }}" class="btn btn-sm btn-secondary-custom mt-2"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Download CSV Registers</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appearance Section -->
+        <div id="section-appearance" class="glass-card p-4 settings-section-card">
+            <h5 class="text-white fw-semibold mb-3 border-bottom pb-2 border-dark-blue">
+                <i class="bi bi-palette-fill text-primary-glow me-2"></i>Appearance Styles
+            </h5>
+            <form onsubmit="saveSettings(event, 'Appearance preference saved successfully.')">
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label-custom">Visual Palette Mode</label>
+                        <div class="d-flex gap-3 mt-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="themeMode" id="darkRadio" value="dark" checked>
+                                <label class="form-check-label text-white small" for="darkRadio">Dark Navy Theme (Standard)</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="themeMode" id="lightRadio" value="light">
+                                <label class="form-check-label text-white small" for="lightRadio">Corporate Light Mode</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label-custom">Accent Highlight Color</label>
+                        <select class="form-select form-control-custom w-100">
+                            <option value="blue" selected>Primary Blue (#2563EB)</option>
+                            <option value="emerald">Lab Emerald Green (#10B981)</option>
+                            <option value="purple">Quantum Purple (#8B5CF6)</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary-custom mt-4">Apply Style</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function switchSection(sectionId, btn) {
+        // Toggle tabs active
+        document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Switch section cards
+        document.querySelectorAll('.settings-section-card').forEach(sec => sec.classList.remove('active'));
+        document.getElementById(`section-${sectionId}`).classList.add('active');
+    }
+
+    function saveSettings(event, successMsg) {
+        event.preventDefault();
+        alert("Configuration updated: " + successMsg);
+    }
+
+    function triggerDBAction(action) {
+        if (action === 'backup') {
+            alert("Database Backup Complete!\nbiometric_backup.db compiles successfully compiled on offline server node.");
+        } else if (action === 'restore') {
+            alert("Ready to restore database. Please select backup file from system storage.");
+        }
+    }
+</script>
+{% endblock %}

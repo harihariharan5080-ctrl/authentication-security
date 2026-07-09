@@ -1,34 +1,162 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}Dashboard Overview{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Styling for metric cards */
+    .stat-card.stat-grid-card {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
+        border: 1px solid var(--border-color);
+        position: relative;
+    }
+    
+    .stat-card.stat-grid-card::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        border-radius: 0 0 var(--radius-md) var(--radius-md);
+    }
+    
+    .stat-grid-card.blue::after { background: var(--primary); }
+    .stat-grid-card.green::after { background: var(--success); }
+    .stat-grid-card.orange::after { background: var(--warning); }
+    .stat-grid-card.red::after { background: var(--danger); }
+    
+    /* Mock Chart Styles */
+    .mock-chart-container {
+        height: 180px;
+        position: relative;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        padding-top: 20px;
+    }
+    
+    .chart-bar-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 14%;
+        height: 100%;
+        justify-content: flex-end;
+    }
+    
+    .chart-bar {
+        width: 100%;
+        border-radius: 4px 4px 0 0;
+        background: linear-gradient(to top, rgba(37, 99, 235, 0.2), var(--primary-glow));
+        transition: all 0.3s ease;
+        position: relative;
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+    }
+    
+    .chart-bar:hover {
+        background: linear-gradient(to top, rgba(59, 130, 246, 0.5), #60a5fa);
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+        cursor: pointer;
+    }
+    
+    .chart-label {
+        font-size: 0.7rem;
+        color: var(--silver);
+        margin-top: 6px;
+    }
+    
+    .chart-tooltip {
+        position: absolute;
+        top: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--bg-panel);
+        border: 1px solid var(--border-color);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.65rem;
+        color: #fff;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        pointer-events: none;
+        white-space: nowrap;
+    }
+    
+    .chart-bar:hover .chart-tooltip {
+        opacity: 1;
+    }
+    
+    /* Donut chart styles */
+    .donut-chart-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 180px;
+    }
+    
+    .radial-progress-ring {
+        transform: rotate(-90deg);
+    }
+    
+    .radial-circle-bg {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.05);
+        stroke-width: 8;
+    }
+    
+    .radial-circle-val {
+        fill: none;
+        stroke: var(--success);
+        stroke-width: 8;
+        stroke-linecap: round;
+        stroke-dasharray: 251.2;
+        stroke-dashoffset: 35.1; /* 86% present */
+        transition: stroke-dashoffset 1s ease;
+    }
+    
+    .radial-center-text {
+        font-size: 1.5rem;
+        font-weight: 700;
+        fill: #fff;
+        font-family: 'Poppins', sans-serif;
+    }
+    
+    .radial-center-sub {
+        font-size: 0.7rem;
+        fill: var(--silver);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col">
-        <h2 class="text-white fw-bold mb-1">Dashboard Overview</h2>
-        <p class="text-muted">Welcome to CRT Industries Chemical Lab Face ID authentication console.</p>
+<!-- Welcome Title Header -->
+<div class="row mb-4 align-items-center">
+    <div class="col-12 col-md-8">
+        <h2 class="text-white fw-bold mb-1">Laboratory Console</h2>
+        <p class="text-silver mb-0 small">Secure Biometric Registry & Verification Node | CRT Industries Chemical Lab</p>
     </div>
 </div>
 
-<!-- Statistics Cards -->
+<!-- Dashboard Stats Grid -->
 <div class="row mb-4 g-4">
     <!-- Total Employees -->
-    <div class="col-12 col-sm-6 col-xl-4">
-        <div class="glass-card stat-card d-flex align-items-center">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="glass-card stat-card stat-grid-card blue d-flex align-items-center">
             <div class="stat-icon bg-primary-glow-trans text-primary">
-                <i class="bi bi-people-fill"></i>
+                <i class="bi bi-people-fill text-primary-glow"></i>
             </div>
             <div class="ms-3">
-                <span class="stat-label text-silver small text-uppercase">Total Employees</span>
+                <span class="stat-label text-silver small text-uppercase">Total Profiles</span>
                 <h3 class="stat-value text-white fw-bold mb-0" id="stat-total">{{ total_employees }}</h3>
             </div>
         </div>
     </div>
     <!-- Present Today -->
-    <div class="col-12 col-sm-6 col-xl-4">
-        <div class="glass-card stat-card d-flex align-items-center">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="glass-card stat-card stat-grid-card green d-flex align-items-center">
             <div class="stat-icon bg-success-glow-trans text-success">
-                <i class="bi bi-person-check-fill"></i>
+                <i class="bi bi-person-check-fill text-success-glow"></i>
             </div>
             <div class="ms-3">
                 <span class="stat-label text-silver small text-uppercase">Present Today</span>
@@ -37,36 +165,121 @@
         </div>
     </div>
     <!-- Absent Today -->
-    <div class="col-12 col-sm-6 col-xl-4">
-        <div class="glass-card stat-card d-flex align-items-center">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="glass-card stat-card stat-grid-card red d-flex align-items-center">
             <div class="stat-icon bg-danger-glow-trans text-danger">
-                <i class="bi bi-person-x-fill"></i>
+                <i class="bi bi-person-x-fill text-danger-glow"></i>
             </div>
             <div class="ms-3">
-                <span class="stat-label text-silver small text-uppercase">Absent</span>
+                <span class="stat-label text-silver small text-uppercase">Absent Today</span>
                 <h3 class="stat-value text-white fw-bold mb-0" id="stat-absent">{{ absent_today }}</h3>
+            </div>
+        </div>
+    </div>
+    <!-- Late Arrivals -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="glass-card stat-card stat-grid-card orange d-flex align-items-center">
+            <div class="stat-icon bg-warning-glow-trans text-warning">
+                <i class="bi bi-alarm-fill text-warning-glow"></i>
+            </div>
+            <div class="ms-3">
+                <span class="stat-label text-silver small text-uppercase">Late Arrivals</span>
+                <h3 class="stat-value text-white fw-bold mb-0" id="stat-late">1</h3>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-4">
-    <!-- Camera Viewport Card -->
+<!-- Extra Stats Row -->
+<div class="row mb-4 g-4">
+    <!-- Unknown Face Attempts -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="glass-card stat-card stat-grid-card red d-flex align-items-center">
+            <div class="stat-icon bg-danger-glow-trans text-danger">
+                <i class="bi bi-shield-exclamation text-danger-glow"></i>
+            </div>
+            <div class="ms-3">
+                <span class="stat-label text-silver small text-uppercase">Unknown Attempts</span>
+                <h3 class="stat-value text-white fw-bold mb-0">0</h3>
+            </div>
+        </div>
+    </div>
+    <!-- Camera Status -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="glass-card stat-card stat-grid-card green d-flex align-items-center">
+            <div class="stat-icon bg-success-glow-trans text-success">
+                <i class="bi bi-camera-video-fill text-success-glow"></i>
+            </div>
+            <div class="ms-3">
+                <span class="stat-label text-silver small text-uppercase">Camera Sensor</span>
+                <h3 class="stat-value text-white fw-bold mb-0" style="font-size: 1.15rem;">ONLINE</h3>
+            </div>
+        </div>
+    </div>
+    <!-- Database Status -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="glass-card stat-card stat-grid-card green d-flex align-items-center">
+            <div class="stat-icon bg-success-glow-trans text-success">
+                <i class="bi bi-database-fill-check text-success-glow"></i>
+            </div>
+            <div class="ms-3">
+                <span class="stat-label text-silver small text-uppercase">Database Status</span>
+                <h3 class="stat-value text-white fw-bold mb-0" style="font-size: 1.15rem;">CONNECTED</h3>
+            </div>
+        </div>
+    </div>
+    <!-- System Health -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="glass-card stat-card stat-grid-card blue d-flex align-items-center">
+            <div class="stat-icon bg-primary-glow-trans text-primary">
+                <i class="bi bi-heart-pulse-fill text-primary-glow"></i>
+            </div>
+            <div class="ms-3">
+                <span class="stat-label text-silver small text-uppercase">System Health</span>
+                <h3 class="stat-value text-white fw-bold mb-0" style="font-size: 1.15rem;">100% OK</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Primary Interactive Row -->
+<div class="row g-4 mb-4">
+    <!-- Camera Viewport scanner panel -->
     <div class="col-12 col-lg-7 col-xl-8">
-        <div class="glass-card p-4">
-            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2 border-dark-blue">
-                <h5 class="text-white fw-semibold mb-0"><i class="bi bi-camera-video me-2 text-primary"></i>Live Camera Feed</h5>
-                <span class="badge bg-secondary-custom px-3 py-2 small d-flex align-items-center">
-                    <span class="status-indicator online me-2"></span> Passive Scan Mode
+        <div class="glass-card p-4 h-100 d-flex flex-column gap-3">
+            <div class="d-flex align-items-center justify-content-between border-bottom pb-2 border-dark-blue">
+                <h5 class="text-white fw-semibold mb-0"><i class="bi bi-camera-video me-2 text-primary-glow"></i>Live Video Scan</h5>
+                <span id="scan-mode-badge" class="badge bg-secondary-custom px-3 py-2 small d-flex align-items-center">
+                    <span class="status-indicator online me-2"></span> Passive Capture
                 </span>
             </div>
             
-            <div class="camera-stream-wrapper text-center rounded overflow-hidden position-relative">
-                <img id="dashboard-feed" src="{{ url_for('video_feed') }}" alt="Camera Stream Loading..." class="img-fluid camera-stream">
-                <div id="camera-error-overlay" class="camera-error-overlay d-none">
+            <div class="camera-stream-wrapper text-center flex-grow-1 d-flex align-items-center justify-content-center position-relative" style="min-height: 380px;">
+                <div class="scanner-overlay" style="position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0,0,0,0.2) 50%), linear-gradient(90deg, rgba(255,0,0,0.03), rgba(0,255,0,0.01), rgba(0,0,255,0.03)); background-size: 100% 4px, 6px 100%; z-index:2;"></div>
+                <div class="scanner-line" style="position: absolute; left:0; width:100%; height:2px; background: linear-gradient(90deg, transparent, rgba(59,130,246,0.6), transparent); animation: scanline-move 6s linear infinite; z-index:3; pointer-events:none;"></div>
+                
+                <img id="dashboard-feed" src="{{ url_for('video_feed') }}" alt="Webcam Stream" class="img-fluid camera-stream w-100 h-100" style="object-fit: cover; max-height: 480px;">
+                
+                <div id="camera-error-overlay" class="camera-error-overlay d-none z-3 position-absolute text-center">
                     <i class="bi bi-camera-video-off text-danger fs-1 mb-3"></i>
-                    <p class="text-white fw-bold mb-1">Webcam Hardware Not Accessible</p>
-                    <p class="text-muted small">Check connection, permissions, or system access logs.</p>
+                    <p class="text-white fw-bold mb-1">Webcam Feed Offline</p>
+                    <p class="text-muted small px-3">Webcam is disabled or hardware is not accessible on this device node.</p>
+                </div>
+            </div>
+            
+            <!-- Controls Panel -->
+            <div class="cam-controls d-flex justify-content-between align-items-center p-3 rounded" style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color);">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="status-indicator online"></span>
+                    <span id="camera-status-text" class="text-white small fw-bold">Camera Feed Active</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-secondary-custom" onclick="toggleFeedPreview()" id="toggleFeedBtn">
+                        <i class="bi bi-eye-slash-fill me-1"></i>Toggle Preview
+                    </button>
+                    <button id="triggerSimulationBtn" class="btn btn-sm btn-primary-custom" onclick="triggerSimulation()">
+                        <i class="bi bi-play-circle-fill me-1"></i>Simulate Check-In
+                    </button>
                 </div>
             </div>
         </div>
@@ -74,86 +287,306 @@
 
     <!-- Quick Actions Panel -->
     <div class="col-12 col-lg-5 col-xl-4">
-        <div class="glass-card p-4 h-100">
-            <h5 class="text-white fw-semibold mb-3 border-bottom pb-2 border-dark-blue"><i class="bi bi-lightning-charge-fill text-warning me-2"></i>Quick Actions</h5>
+        <div class="glass-card p-4 h-100 d-flex flex-column gap-3">
+            <h5 class="text-white fw-semibold mb-2 border-bottom pb-2 border-dark-blue"><i class="bi bi-lightning-charge-fill text-warning-glow me-2"></i>Quick Actions</h5>
             
-            <div class="d-grid gap-3">
-                <a href="{{ url_for('attendance_page') }}" class="btn btn-primary-custom py-3 text-start px-4">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-0 text-white fw-bold"><i class="bi bi-camera-video-fill me-2"></i>Start Attendance</h6>
-                            <small class="text-white-50">Open camera for face ID verification</small>
-                        </div>
-                        <i class="bi bi-chevron-right text-white"></i>
+            <div class="d-flex flex-column gap-3">
+                <a href="{{ url_for('register_page') }}" class="btn btn-secondary-custom text-start py-2.5 px-3 w-100 d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="mb-0 text-white fw-bold small"><i class="bi bi-person-plus-fill me-2 text-primary-glow"></i>Register Employee</h6>
+                        <small class="text-muted" style="font-size: 0.72rem;">Enroll new profile & scan face</small>
                     </div>
+                    <i class="bi bi-chevron-right text-muted"></i>
                 </a>
                 
-                <a href="{{ url_for('register_page') }}" class="btn btn-secondary-custom py-3 text-start px-4">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-0 text-white fw-bold"><i class="bi bi-person-plus-fill me-2"></i>Register Employee</h6>
-                            <small class="text-silver">Create profile & scan face images</small>
-                        </div>
-                        <i class="bi bi-chevron-right text-silver"></i>
+                <a href="{{ url_for('attendance_page') }}" class="btn btn-secondary-custom text-start py-2.5 px-3 w-100 d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="mb-0 text-white fw-bold small"><i class="bi bi-camera-video-fill me-2 text-success-glow"></i>Start Attendance</h6>
+                        <small class="text-muted" style="font-size: 0.72rem;">Launch live scan match screen</small>
                     </div>
+                    <i class="bi bi-chevron-right text-muted"></i>
+                </a>
+                
+                <a href="{{ url_for('reports_page') }}" class="btn btn-secondary-custom text-start py-2.5 px-3 w-100 d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="mb-0 text-white fw-bold small"><i class="bi bi-file-earmark-bar-graph-fill me-2 text-warning-glow"></i>View Reports</h6>
+                        <small class="text-muted" style="font-size: 0.72rem;">Extract xlsx database registers</small>
+                    </div>
+                    <i class="bi bi-chevron-right text-muted"></i>
                 </a>
 
-                <a href="{{ url_for('reports_page') }}" class="btn btn-secondary-custom py-3 text-start px-4">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-0 text-white fw-bold"><i class="bi bi-file-earmark-bar-graph-fill me-2"></i>Attendance Reports</h6>
-                            <small class="text-silver">Search history, export CSV & Excel</small>
-                        </div>
-                        <i class="bi bi-chevron-right text-silver"></i>
+                <a href="{{ url_for('employees_page') }}" class="btn btn-secondary-custom text-start py-2.5 px-3 w-100 d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="mb-0 text-white fw-bold small"><i class="bi bi-people-fill me-2 text-info"></i>Employee List</h6>
+                        <small class="text-muted" style="font-size: 0.72rem;">Manage employee directory list</small>
                     </div>
+                    <i class="bi bi-chevron-right text-muted"></i>
                 </a>
 
-                <a href="{{ url_for('employees_page') }}" class="btn btn-secondary-custom py-3 text-start px-4">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-0 text-white fw-bold"><i class="bi bi-people-fill me-2"></i>Employee Database</h6>
-                            <small class="text-silver">Manage records & face encodings</small>
-                        </div>
-                        <i class="bi bi-chevron-right text-silver"></i>
+                <a href="{{ url_for('settings_page') }}" class="btn btn-secondary-custom text-start py-2.5 px-3 w-100 d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="mb-0 text-white fw-bold small"><i class="bi bi-gear-fill me-2 text-silver"></i>Console Settings</h6>
+                        <small class="text-muted" style="font-size: 0.72rem;">Thresholds, backup, database</small>
                     </div>
+                    <i class="bi bi-chevron-right text-muted"></i>
                 </a>
-            </div>
-            
-            <div class="mt-4 pt-3 border-top border-dark-blue bg-dark-blue-tint p-3 rounded text-silver small">
-                <div class="d-flex align-items-center mb-1 text-white fw-semibold">
-                    <i class="bi bi-info-circle-fill text-primary me-2"></i>CRT Lab Offline Node
-                </div>
-                All operations and face datasets reside strictly on local storage. No network connections are initiated.
             </div>
         </div>
     </div>
+</div>
+
+<!-- Charts Section Row -->
+<div class="row g-4 mb-4">
+    <!-- Daily Attendance Ratio Gauge -->
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="glass-card p-4 h-100">
+            <h6 class="text-white fw-bold mb-3 border-bottom pb-2 border-dark-blue small uppercase tracking-wide">Daily Attendance</h6>
+            <div class="donut-chart-wrap">
+                <svg width="150" height="150" class="radial-progress-ring">
+                    <circle class="radial-circle-bg" cx="75" cy="75" r="55"></circle>
+                    <circle class="radial-circle-val" cx="75" cy="75" r="55" id="daily-gauge"></circle>
+                    <text x="75" y="72" dominant-baseline="middle" text-anchor="middle" class="radial-center-text" id="daily-percent-text">0%</text>
+                    <text x="75" y="94" dominant-baseline="middle" text-anchor="middle" class="radial-center-sub">PRESENT RATE</text>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Attendance Bar Chart -->
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="glass-card p-4 h-100">
+            <h6 class="text-white fw-bold mb-3 border-bottom pb-2 border-dark-blue small uppercase tracking-wide">Weekly Attendance</h6>
+            <div class="mock-chart-container">
+                <div class="chart-bar-wrap">
+                    <div class="chart-bar" style="height: 80%;"><span class="chart-tooltip">4 Employees</span></div>
+                    <span class="chart-label">Mon</span>
+                </div>
+                <div class="chart-bar-wrap">
+                    <div class="chart-bar" style="height: 60%;"><span class="chart-tooltip">3 Employees</span></div>
+                    <span class="chart-label">Tue</span>
+                </div>
+                <div class="chart-bar-wrap">
+                    <div class="chart-bar" style="height: 90%;"><span class="chart-tooltip">4 Employees</span></div>
+                    <span class="chart-label">Wed</span>
+                </div>
+                <div class="chart-bar-wrap">
+                    <div class="chart-bar" style="height: 75%;"><span class="chart-tooltip">3 Employees</span></div>
+                    <span class="chart-label">Thu</span>
+                </div>
+                <div class="chart-bar-wrap">
+                    <div class="chart-bar" style="height: 85%;"><span class="chart-tooltip">4 Employees</span></div>
+                    <span class="chart-label">Fri</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Line Chart -->
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="glass-card p-4 h-100">
+            <h6 class="text-white fw-bold mb-3 border-bottom pb-2 border-dark-blue small uppercase tracking-wide">Monthly Trend</h6>
+            <div class="mock-chart-container" style="align-items: center; justify-content: center;">
+                <svg width="100%" height="150" viewBox="0 0 200 100" preserveAspectRatio="none">
+                    <!-- Grid Lines -->
+                    <line x1="0" y1="20" x2="200" y2="20" stroke="rgba(255,255,255,0.03)" stroke-width="1"></line>
+                    <line x1="0" y1="50" x2="200" y2="50" stroke="rgba(255,255,255,0.03)" stroke-width="1"></line>
+                    <line x1="0" y1="80" x2="200" y2="80" stroke="rgba(255,255,255,0.03)" stroke-width="1"></line>
+                    <!-- Line path -->
+                    <path d="M 10 90 Q 40 40 70 70 T 130 30 T 190 10" fill="none" stroke="var(--primary-glow)" stroke-width="3" stroke-linecap="round"></path>
+                    <!-- Glowing gradient path area -->
+                    <path d="M 10 90 Q 40 40 70 70 T 130 30 T 190 10 L 190 100 L 10 100 Z" fill="url(#monthly-chart-grad)" opacity="0.15"></path>
+                    <defs>
+                        <linearGradient id="monthly-chart-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="var(--primary-glow)"></stop>
+                            <stop offset="100%" stop-color="transparent"></stop>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department-wise Attendance List -->
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="glass-card p-4 h-100">
+            <h6 class="text-white fw-bold mb-3 border-bottom pb-2 border-dark-blue small uppercase tracking-wide">Departments</h6>
+            <div class="d-flex flex-column gap-3 mt-2">
+                <div>
+                    <div class="d-flex justify-content-between text-silver small mb-1">
+                        <span>Chemical Analysis</span>
+                        <strong class="text-white">100%</strong>
+                    </div>
+                    <div class="progress" style="height: 6px; background: rgba(255,255,255,0.03);">
+                        <div class="progress-bar bg-success-glow" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="d-flex justify-content-between text-silver small mb-1">
+                        <span>Research & Bio</span>
+                        <strong class="text-white">92%</strong>
+                    </div>
+                    <div class="progress" style="height: 6px; background: rgba(255,255,255,0.03);">
+                        <div class="progress-bar bg-primary-glow" role="progressbar" style="width: 92%" aria-valuenow="92" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="d-flex justify-content-between text-silver small mb-1">
+                        <span>Quality Assurance</span>
+                        <strong class="text-white">85%</strong>
+                    </div>
+                    <div class="progress" style="height: 6px; background: rgba(255,255,255,0.03);">
+                        <div class="progress-bar bg-warning-glow" role="progressbar" style="width: 85%" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Terminal Log Feed -->
+<div class="glass-card p-4 mb-4">
+    <h5 class="text-white fw-semibold border-bottom pb-2 border-dark-blue mb-3 d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-terminal-fill text-success-glow me-2"></i>Activity Terminal</span>
+        <button class="btn btn-sm btn-link text-muted p-0 text-decoration-none small" onclick="clearTerminal()">Clear</button>
+    </h5>
+    <div id="terminal-screen" class="terminal-feed" style="height: 180px;"></div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Monitor MJPEG image error to show error panel
     const feedImg = document.getElementById('dashboard-feed');
     const errOverlay = document.getElementById('camera-error-overlay');
+    const camStatusText = document.getElementById('camera-status-text');
+    const toggleFeedBtn = document.getElementById('toggleFeedBtn');
     
+    let isFeedMuted = false;
+    let lastLoggedTimestamp = 0;
+
     feedImg.onerror = function() {
         feedImg.classList.add('d-none');
         errOverlay.classList.remove('d-none');
+        camStatusText.textContent = "Camera Feed Offline";
+        camStatusText.previousElementSibling.className = "status-indicator offline";
+        writeLog("Webcam sensor hardware connection offline.", "warning");
     };
-    
-    // Periodically update dashboard statistics via API
+
+    function toggleFeedPreview() {
+        if (!isFeedMuted) {
+            feedImg.src = "";
+            feedImg.classList.add('d-none');
+            errOverlay.classList.remove('d-none');
+            toggleFeedBtn.innerHTML = '<i class="bi bi-eye-fill me-1"></i>Show Preview';
+            camStatusText.textContent = "Preview Muted";
+            isFeedMuted = true;
+            writeLog("Operator muted console camera viewport preview.", "info");
+        } else {
+            feedImg.src = "{{ url_for('video_feed') }}";
+            feedImg.classList.remove('d-none');
+            errOverlay.classList.add('d-none');
+            toggleFeedBtn.innerHTML = '<i class="bi bi-eye-slash-fill me-1"></i>Toggle Preview';
+            camStatusText.textContent = "Camera Feed Active";
+            isFeedMuted = false;
+            writeLog("Operator enabled console camera viewport preview.", "info");
+        }
+    }
+
+    // Terminal Logging Helper
+    function writeLog(message, type = "info") {
+        const screen = document.getElementById('terminal-screen');
+        if (!screen) return;
+        
+        const now = new Date();
+        const hrs = String(now.getHours()).padStart(2, '0');
+        const mins = String(now.getMinutes()).padStart(2, '0');
+        const secs = String(now.getSeconds()).padStart(2, '0');
+        
+        const line = document.createElement('div');
+        line.className = 'terminal-line';
+        line.innerHTML = `
+            <span class="terminal-time">[${hrs}:${mins}:${secs}]</span>
+            <span class="terminal-msg ${type}">${message}</span>
+        `;
+        screen.appendChild(line);
+        screen.scrollTop = screen.scrollHeight;
+    }
+
+    function clearTerminal() {
+        document.getElementById('terminal-screen').innerHTML = '';
+        writeLog("Console activity log cleared.", "info");
+    }
+
+    // Update metrics and recalculate gauge offsets
     function updateStats() {
         fetch('/api/stats')
             .then(res => res.json())
             .then(data => {
-                document.getElementById('stat-total').textContent = data.total_employees;
-                document.getElementById('stat-present').textContent = data.present_today;
-                document.getElementById('stat-absent').textContent = data.absent_today;
+                const totalEl = document.getElementById('stat-total');
+                const presentEl = document.getElementById('stat-present');
+                const absentEl = document.getElementById('stat-absent');
+                
+                totalEl.textContent = data.total_employees;
+                presentEl.textContent = data.present_today;
+                absentEl.textContent = data.absent_today;
+                
+                // Recalculate percent and circular gauge offset
+                const total = parseInt(data.total_employees) || 0;
+                const present = parseInt(data.present_today) || 0;
+                const pct = total > 0 ? Math.round((present / total) * 100) : 0;
+                
+                document.getElementById('daily-percent-text').textContent = pct + "%";
+                
+                // SVG ring circumference is 2 * PI * r = 2 * 3.14159 * 55 = 345.57
+                const r = 55;
+                const circ = 2 * Math.PI * r;
+                const offset = circ - (pct / 100) * circ;
+                
+                const gauge = document.getElementById('daily-gauge');
+                gauge.style.strokeDasharray = circ;
+                gauge.style.strokeDashoffset = offset;
             })
             .catch(err => console.error("Error updating stats:", err));
     }
-    
-    // Poll stats every 5 seconds
-    setInterval(updateStats, 5000);
+
+    function triggerSimulation() {
+        const btn = document.getElementById('triggerSimulationBtn');
+        btn.disabled = true;
+        writeLog("Biometric face registration trigger simulated...", "info");
+        
+        fetch('/api/test_verify')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    writeLog("Simulation verify request returned successfully.", "success");
+                }
+                setTimeout(() => { btn.disabled = false; }, 1500);
+            })
+            .catch(err => {
+                console.error("Simulation failed:", err);
+                writeLog("Verify simulation trigger error.", "warning");
+                btn.disabled = false;
+            });
+    }
+
+    function checkLatestVerification() {
+        fetch('/api/latest_verification')
+            .then(res => res.json())
+            .then(data => {
+                if (data.employee_id && data.timestamp > lastLoggedTimestamp) {
+                    lastLoggedTimestamp = data.timestamp;
+                    writeLog(`BIOMETRIC FACE ID MATCHED: Employee ${data.name} (${data.employee_id}) registered present for ${data.department}.`, "success");
+                    updateStats();
+                }
+            })
+            .catch(err => console.error("Error checking verification logs:", err));
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        writeLog("Chemical Laboratory biometric access server online.", "info");
+        updateStats();
+        
+        setInterval(updateStats, 5000);
+        setInterval(checkLatestVerification, 1500);
+    });
 </script>
 {% endblock %}
